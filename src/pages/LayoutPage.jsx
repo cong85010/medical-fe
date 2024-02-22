@@ -8,6 +8,9 @@ import {
   BellOutlined,
   LogoutOutlined,
   GroupOutlined,
+  CalendarOutlined,
+  FileOutlined,
+  UserSwitchOutlined,
 } from "@ant-design/icons";
 import {
   Layout,
@@ -22,7 +25,8 @@ import {
   Dropdown,
 } from "antd";
 import { Link, Outlet, useNavigate } from "react-router-dom";
-import { TYPE_EMPLOYEE } from "src/utils/constant";
+import { TYPE_EMPLOYEE } from "src/utils";
+import { useSelector } from "react-redux";
 const { Header, Sider, Content } = Layout;
 const data = [
   {
@@ -64,6 +68,9 @@ const LayoutPage = () => {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
   const navigate = useNavigate();
+  const {
+    user: { username, userType },
+  } = useSelector((state) => state.auth);
 
   const contentNoti = (
     <List
@@ -87,32 +94,77 @@ const LayoutPage = () => {
   );
 
   const menuSidebars = useMemo(() => {
-    const type = "doctor";
     const menuItems = [];
 
-    if (type === TYPE_EMPLOYEE.admin) {
-      menuItems.push({
-        key: "users",
-        icon: <UserOutlined />,
-        label: "Người dùng",
-        link: "/users",
-      });
-    }
+    switch (userType) {
+      case TYPE_EMPLOYEE.admin: {
+        menuItems.push({
+          key: "users",
+          icon: <UserOutlined />,
+          label: "Người dùng",
+          link: "/users",
+        });
+        break;
+      }
+      case TYPE_EMPLOYEE.doctor: {
+        const menus = [
+          {
+            key: "calendar",
+            icon: <CalendarOutlined />,
+            label: "Lịch biểu",
+            link: "/calendar",
+          },
+          {
+            key: "examination",
+            icon: <GroupOutlined />,
+            label: "Khám bệnh",
+            link: "/examination",
+          },
+        ];
 
-    if (type === TYPE_EMPLOYEE.doctor) {
-      menuItems.push({
-        key: "calendar",
-        icon: <UserOutlined />,
-        label: "Lịch biểu",
-        link: "/calendar",
-      });
+        menuItems.push(...menus);
+        break;
+      }
+      case TYPE_EMPLOYEE.administrative: {
+        const menus = [
+          {
+            key: "administrative",
+            icon: <UserSwitchOutlined />,
+            label: "Hồ sơ bệnh án",
+            link: "/profile-medical",
+          },
+          {
+            key: "examination",
+            icon: <GroupOutlined />,
+            label: "Khám bệnh",
+            link: "/examination",
+          },
+        ];
 
-      menuItems.push({
-        key: "examination",
-        icon: <GroupOutlined />,
-        label: "Khám bệnh",
-        link: "/examination",
-      });
+        menuItems.push(...menus);
+        break;
+      }
+      case TYPE_EMPLOYEE.sales: {
+        menuItems.push({
+          key: "sales",
+          icon: <UploadOutlined />,
+          label: "Bán hàng",
+          link: "/sales",
+        });
+        break;
+      }
+      case TYPE_EMPLOYEE.user: {
+        menuItems.push({
+          key: "medical",
+          icon: <FileOutlined />,
+          label: "Bệnh án",
+          link: "/medical",
+        });
+        break;
+      }
+      default: {
+        break;
+      }
     }
 
     menuItems.push({
@@ -122,11 +174,7 @@ const LayoutPage = () => {
       link: "/logout",
     });
     return menuItems;
-  }, []);
-
-  console.log("====================================");
-  console.log(menuSidebars);
-  console.log("====================================");
+  }, [userType]);
 
   const selectedMenu = () => {
     const menu = menuSidebars.find((menu) =>
@@ -165,7 +213,7 @@ const LayoutPage = () => {
         <Menu
           theme="light"
           mode="inline"
-          defaultSelectedKeys={selectedMenu()}
+          selectedKeys={selectedMenu()}
           items={menuSidebars}
           onClick={onClickMenu}
         />
@@ -205,7 +253,7 @@ const LayoutPage = () => {
                 arrow
                 trigger="click"
               >
-                <Button icon={<UserOutlined />}>user</Button>
+                <Button icon={<UserOutlined />}>{username}</Button>
               </Dropdown>
             </Flex>
           </Flex>
@@ -217,6 +265,7 @@ const LayoutPage = () => {
             minHeight: 280,
             background: colorBgContainer,
             borderRadius: borderRadiusLG,
+            overflow: "auto",
           }}
         >
           <Outlet />

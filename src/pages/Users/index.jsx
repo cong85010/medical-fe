@@ -1,4 +1,9 @@
-import { PlusCircleFilled, PlusCircleOutlined } from "@ant-design/icons";
+import {
+  LockOutlined,
+  PlusCircleFilled,
+  PlusCircleOutlined,
+  UnlockOutlined,
+} from "@ant-design/icons";
 import {
   Breadcrumb,
   Table,
@@ -11,15 +16,26 @@ import {
   Form,
   Input,
   Select,
+  notification,
+  Tooltip,
 } from "antd";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { changeActiveStatus, createUser, getUsers } from "src/api/user";
 import SpaceDiv from "src/components/SpaceDiv";
 import Title from "src/components/Title";
-import { TYPE_EMPLOYEE_STR, colorOfType } from "src/utils/constant";
+import { TYPE_EMPLOYEE_STR, colorOfType } from "src/utils";
 const { Option } = Select;
+
 export default function UsersPage() {
   const [isVisible, setIsVisible] = useState(false);
   const [form] = Form.useForm();
+  const [users, setUsers] = useState([]);
+  const [reload, setReload] = useState(false);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    pageSize: 10,
+    current: 1,
+  });
 
   const columns = [
     {
@@ -34,69 +50,98 @@ export default function UsersPage() {
       key: "email",
     },
     {
-      title: "Phone",
+      title: "Điện thoại",
       dataIndex: "phone",
       key: "phone",
     },
+
     {
       title: "Kiểu tài khoản",
-      key: "type",
-      dataIndex: "type",
-      render: (_, { type }) => (
+      key: "userType",
+      dataIndex: "userType",
+      render: (_, { userType }) => (
         <>
-          <Tag color={colorOfType[type]} key={type}>
-            {type?.toUpperCase()}
+          <Tag color={colorOfType[userType]} key={userType}>
+            {TYPE_EMPLOYEE_STR[userType].toUpperCase()}
           </Tag>
         </>
       ),
     },
     {
-      title: "Action",
+      title: "Trạng thái",
+      dataIndex: "activeStatus",
+      key: "activeStatus",
+      render: (_, { activeStatus }) => (
+        <>
+          <Tag color={activeStatus ? "green" : "red"} key={activeStatus}>
+            {activeStatus ? "Đang hoạt động" : "Đã khóa"}
+          </Tag>
+        </>
+      ),
+    },
+    {
+      title: "Hành động",
       key: "action",
       render: (_, record) => (
         <Space size="middle">
-          <a>Invite {record.name}</a>
-          <a>Delete</a>
+          <Tooltip
+            title={
+              record?.activeStatus ? "Bạn muốn khóa ?" : "Bạn muốn mở khóa?"
+            }
+          >
+            <Button type="text" onClick={() => handleStatus(record)}>
+              {record?.activeStatus ? <UnlockOutlined /> : <LockOutlined />}
+            </Button>
+          </Tooltip>
         </Space>
       ),
     },
   ];
-  const data = [
-    {
-      key: "1",
-      name: "John Brown",
-      age: 32,
-      address: "New York No. 1 Lake Park",
-      tags: ["nice", "developer"],
-    },
-    {
-      key: "2",
-      name: "Jim Green",
-      age: 42,
-      address: "London No. 1 Lake Park",
-      tags: ["loser"],
-    },
-    {
-      key: "3",
-      name: "Joe Black",
-      age: 32,
-      address: "Sydney No. 1 Lake Park",
-      tags: ["cool", "teacher"],
-    },
-  ];
+
+  const handleStatus = async (record) => {
+    try {
+      const user = {
+        _id: record._id,
+        activeStatus: !record.activeStatus,
+      };
+      await changeActiveStatus(user);
+      notification.success({
+        message: `Tài khoản ${
+          user.activeStatus ? "mở khóa" : "khóa"
+        } thành công`,
+      });
+      setReload(!reload);
+    } catch (error) {
+      console.log(error);
+      notification.error({ message: "Có lỗi xảy ra" });
+    }
+  };
 
   const handleOk = () => {
     form
       .validateFields()
-      .then((values) => {
-        console.log(values);
+      .then(async (values) => {
+        const result = await createUser(values);
+        console.log(result);
+        notification.success({ message: "Tạo tài khoản thành công" });
         form.resetFields();
         setIsVisible(false);
+        setReload(!reload);
       })
       .catch((info) => {
         console.log("Validate Failed:", info);
       });
   };
+
+  useEffect(() => {
+    const initData = async () => {
+      const result = await getUsers();
+      setUsers(result.users);
+      setPagination({ ...pagination, total: result.total });
+    };
+
+    initData();
+  }, [reload]);
 
   const handleCancel = () => {
     setIsVisible(false);
@@ -114,7 +159,7 @@ export default function UsersPage() {
           Thêm người dùng
         </Button>
       </Flex>
-      <Table columns={columns} dataSource={data} />
+      <Table columns={columns} dataSource={users} />
       <Modal
         open={isVisible}
         title="Thêm người dùng"
@@ -152,13 +197,15 @@ export default function UsersPage() {
           <Form.Item
             label="Phone"
             name="phone"
-            rules={[{ required: true, message: "Vui lòng nhập số điện thoại!" }]}
+            rules={[
+              { required: true, message: "Vui lòng nhập số điện thoại!" },
+            ]}
           >
             <Input />
           </Form.Item>
           <Form.Item
             label="Kiểu tài khoản"
-            name="type"
+            name="userType"
             rules={[{ required: true, message: "Chọn kiểu tài khoản!" }]}
           >
             <Select>

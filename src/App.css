@@ -1,8 +1,18 @@
 body {
   margin: 0;
-  padding: 0;  
+  padding: 0;
 }
 
 #root {
   min-height: 100vh;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #acacac;
+  border-radius: 10px;
 }
