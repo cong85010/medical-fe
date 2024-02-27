@@ -12,7 +12,7 @@ const LoginPage = () => {
 
   const onFinish = async (values) => {
     //Trim values
-    values.username = values.username.trim();
+    values.phone = values.phone.trim();
     values.password = values.password.trim();
     const { user } = await dispatch(loginAuth(values)).unwrap();
 
@@ -70,18 +70,18 @@ const LoginPage = () => {
           Đăng nhập
         </Typography.Title>
         <Form.Item
-          name="username"
+          name="phone"
           rules={[
             {
               required: true,
-              message: "Nhập username!",
-            },
+              message: "Nhập số điện thoại hoặc email",
+            }
           ]}
         >
           <Input
             size="large"
             prefix={<UserOutlined className="site-form-item-icon" />}
-            placeholder="Username"
+            placeholder="Số điện thoại/Email"
           />
         </Form.Item>
         <Form.Item

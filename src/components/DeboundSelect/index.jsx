@@ -3,7 +3,7 @@ import { Button, Flex, Select, Spin } from "antd";
 import debounce from "lodash/debounce";
 import React, { useMemo, useRef, useState } from "react";
 
-export function DebounceSelect({
+function DebounceSelectMemo({
   fetchOptions,
   debounceTimeout = 800,
   childrenRight = null,
@@ -42,7 +42,7 @@ export function DebounceSelect({
 
   React.useEffect(() => {
     debounceFetcher();
-  }, [debounceFetcher, refreshData]);
+  }, [refreshData]);
 
   return (
     <Flex gap={10}>
@@ -60,3 +60,5 @@ export function DebounceSelect({
     </Flex>
   );
 }
+
+export const DebounceSelect = React.memo(DebounceSelectMemo);

@@ -9,17 +9,17 @@ import {
   notification,
   Select,
 } from "antd";
-import { createPatient, updatePatient } from "src/api/user";
+import { createPatient, updateUser } from "src/api/user";
 import dayjs from "dayjs";
 const Option = Select.Option;
 const AddPatientModal = ({ visible, onCancel, onFinish, selectedPatient }) => {
   const [form] = Form.useForm();
 
   useEffect(() => {
-    if(selectedPatient && form) {
+    if (selectedPatient && form) {
       form.setFieldsValue({
         ...selectedPatient,
-        birthday: dayjs(selectedPatient.birthday)
+        birthday: dayjs(selectedPatient.birthday),
       });
     }
   }, [form, selectedPatient]);
@@ -29,19 +29,18 @@ const AddPatientModal = ({ visible, onCancel, onFinish, selectedPatient }) => {
       .validateFields()
       .then(async (values) => {
         let result = {};
-         if(selectedPatient) {
-          result = await updatePatient({...selectedPatient, ...values});
+        if (selectedPatient) {
+          result = await updateUser({ ...selectedPatient, ...values });
           notification.success({
             message: "Cập nhật bệnh nhân thành công!",
           });
-
         } else {
           result = await createPatient(values);
           notification.success({
             message: "Tạo bệnh nhân thành công!",
           });
         }
-        
+
         form.resetFields();
         onFinish(result?.user);
       })
@@ -59,7 +58,7 @@ const AddPatientModal = ({ visible, onCancel, onFinish, selectedPatient }) => {
     <Modal
       title={selectedPatient ? "Cập nhật bệnh nhân" : "Thêm bệnh nhân"}
       open={visible}
-      forceRender
+      destroyOnClose
       onOk={handleOk}
       onCancel={handleCancel}
       footer={[
@@ -71,11 +70,7 @@ const AddPatientModal = ({ visible, onCancel, onFinish, selectedPatient }) => {
         </Button>,
       ]}
     >
-      <Form
-        form={form}
-        layout="vertical"
-        initialValues={{ gender: "male" }}
-      >
+      <Form form={form} layout="vertical" initialValues={{ gender: "male" }}>
         <Form.Item
           name="fullName"
           label="Họ tên"

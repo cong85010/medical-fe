@@ -18,8 +18,8 @@ export const createPatient = (patient) => {
   return instance.post(`${BASE_URL}/create-patient`, patient);
 };
 
-export const updatePatient = (patient) => {
-  return instance.put(`${BASE_URL}/update-patient/${patient._id}`, patient);
+export const updateUser = (user) => {
+  return instance.put(`${BASE_URL}/update/${user._id}`, user);
 };
 
 export const getUserById = (id) => {

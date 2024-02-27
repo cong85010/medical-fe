@@ -19,12 +19,12 @@ import {
   EyeOutlined,
 } from "@ant-design/icons";
 import Title from "src/components/Title";
+import ViewMedicineModal from "src/components/ViewMedicineModal";
 
 const patient = {
   fullName: "John Doe",
   birthday: "01/01/1990",
   address: "123 Main Street",
-  username: "johndoe123",
   email: "john.doe@example.com",
   phone: "555-1234",
   userType: "Patient",
@@ -36,7 +36,10 @@ const patient = {
 const PatientPage = () => {
   const param = useParams();
   const [patient, setPatient] = useState({});
+  const [visibleMedicineModal, setVisibleMedicineModal] = useState(false);
+  const [selectedMedicalRecord, setSelectedMedicalRecord] = useState(null);
   const id = param.id || "";
+
   useEffect(() => {
     const initData = async () => {
       const result = await getUserById(id);
@@ -44,6 +47,11 @@ const PatientPage = () => {
     };
     initData();
   }, [id]);
+
+  const handleViewMedicine = (medicalRecord) => {
+    setSelectedMedicalRecord(medicalRecord);
+    setVisibleMedicineModal(true);
+  };
 
   const columns = [
     {
@@ -111,7 +119,10 @@ const PatientPage = () => {
       ellipsis: true,
       render: (text, record) => (
         <Space size="middle">
-          <Button icon={<EyeOutlined />} />
+          <Button
+            icon={<EyeOutlined />}
+            onClick={() => handleViewMedicine(record)}
+          />
         </Space>
       ),
     },
@@ -167,6 +178,10 @@ const PatientPage = () => {
           dataSource={data}
         />
       </Card>
+      <ViewMedicineModal
+        visible={visibleMedicineModal}
+        onCancel={() => setVisibleMedicineModal(false)}
+      />
     </Flex>
   );
 };

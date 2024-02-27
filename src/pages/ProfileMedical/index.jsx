@@ -11,6 +11,7 @@ import {
   Flex,
   Tooltip,
   Spin,
+  Typography,
 } from "antd";
 import {
   EditOutlined,
@@ -26,6 +27,8 @@ import dayjs from "dayjs";
 import AddAppointmentPatient from "src/components/AddAppointmentPatient";
 import AddPatientModal from "src/components/AddPatientModal";
 import { useNavigate } from "react-router-dom";
+import { createAppointment } from "src/api/appointment";
+import ViewScheduleModal from "src/components/ViewScheduleModal";
 
 const ProfileMedicalPage = () => {
   const [patients, setPatients] = useState([]);
@@ -34,21 +37,27 @@ const ProfileMedicalPage = () => {
     pageSize: 10,
     total: 0,
   });
-  const [visiableAppointment, setVisiableAppointment] = useState(false);
+  const [addVisiableAppointment, setAddVisiableAppointment] = useState(false);
   const [visiblePatientModal, setVisiblePatientModal] = useState(false);
+  const [viewVisibleAppointmentModal, setViewVisibleAppointmentModal] = useState(false);
   const [reload, setReload] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [keyword, setKeyword] = useState("");
   const navigate = useNavigate();
 
-  const showAppointmentModal = (record) => {
-    setVisiableAppointment(true);
+  const showAddAppointmentModal = (record = null) => {
+    setAddVisiableAppointment(true);
     setSelectedPatient(record);
   };
 
-  const showAddPatientModal = (record) => {
+  const showAddPatientModal = (record = null) => {
     setVisiblePatientModal(true);
+    setSelectedPatient(record);
+  };
+
+  const showViewAppointmentModal = (record = null) => {
+    setViewVisibleAppointmentModal(true);
     setSelectedPatient(record);
   };
 
@@ -81,18 +90,22 @@ const ProfileMedicalPage = () => {
     },
     {
       title: "Lịch khám",
-      dataIndex: "appointment",
-      key: "appointment",
-      render: (text, record) => (
-        <span>
-          {text ? (
-            `${text.date.format("DD/MM/YYYY")} ${text.time.format("HH:mm")}`
-          ) : (
-            <Button onClick={() => showAppointmentModal(record)}>
-              Tạo lịch khám
-            </Button>
-          )}
-        </span>
+      dataIndex: "totalBooked",
+      key: "totalBooked",
+      render: (totalBooked, record) => (
+        <Flex gap={10}>
+          <Button
+            onClick={() => showViewAppointmentModal(record)}
+            icon={<EyeOutlined />}
+            style={{width: 70}}
+          >
+            <Typography.Text>{totalBooked}</Typography.Text>
+          </Button>
+          <Button
+            onClick={() => showAddAppointmentModal(record)}
+            icon={<PlusOutlined />}
+          ></Button>
+        </Flex>
       ),
     },
     {
@@ -141,7 +154,7 @@ const ProfileMedicalPage = () => {
   }, [reload, pagination.page]);
 
   const handleAppointmentCancel = () => {
-    setVisiableAppointment(false);
+    setAddVisiableAppointment(false);
   };
 
   const handleCreatedPatientModal = (result) => {
@@ -149,7 +162,14 @@ const ProfileMedicalPage = () => {
     setReload(!reload);
   };
 
-  const handleAppointmentOk = (result) => {};
+  const handleAppointmentOk = async (values) => {
+    try {
+      setReload(!reload);
+      setAddVisiableAppointment(false);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const handleResearch = () => {
     setKeyword("");
@@ -166,7 +186,7 @@ const ProfileMedicalPage = () => {
   return (
     <div>
       <Title title="Quản lý hồ sơ bệnh nhân" />
-      <Flex justify="space-between" style={{ marginBottom: 10 }}>
+      <Flex gap={10} justify="space-between" style={{ marginBottom: 10 }}>
         <Flex gap={10}>
           <Tooltip title="Khôi phục">
             <Button onClick={handleResearch}>
@@ -183,19 +203,12 @@ const ProfileMedicalPage = () => {
             <SearchOutlined />
           </Button>
         </Flex>
-        <Button type="primary" onClick={showAddPatientModal}>
+        <Button type="primary" onClick={() => showAddPatientModal()}>
           <PlusOutlined />
           Tạo hồ sơ bệnh nhân
         </Button>
       </Flex>
       <Table
-        onRow={(record, rowIndex) => {
-          return {
-            onDoubleClick: (event) => {
-              navigate("/profile-medical/" + record._id);
-            },
-          };
-        }}
         rowKey="_id"
         dataSource={patients}
         columns={columns}
@@ -208,7 +221,7 @@ const ProfileMedicalPage = () => {
         }}
       />
       <AddAppointmentPatient
-        visible={visiableAppointment}
+        visible={addVisiableAppointment}
         onCancel={handleAppointmentCancel}
         onFinish={handleAppointmentOk}
         selectedPatient={selectedPatient}
@@ -217,6 +230,11 @@ const ProfileMedicalPage = () => {
         visible={visiblePatientModal}
         onCancel={() => setVisiblePatientModal(false)}
         onFinish={handleCreatedPatientModal}
+        selectedPatient={selectedPatient}
+      />
+      <ViewScheduleModal
+        onCancel={() => setViewVisibleAppointmentModal(false)}
+        visible={viewVisibleAppointmentModal}
         selectedPatient={selectedPatient}
       />
     </div>

@@ -39,12 +39,6 @@ export default function UsersPage() {
 
   const columns = [
     {
-      title: "Username",
-      dataIndex: "username",
-      key: "username",
-      render: (text) => <a>{text}</a>,
-    },
-    {
       title: "Email",
       dataIndex: "email",
       key: "email",
@@ -56,7 +50,7 @@ export default function UsersPage() {
     },
 
     {
-      title: "Kiểu tài khoản",
+      title: "Chức vụ",
       key: "userType",
       dataIndex: "userType",
       render: (_, { userType }) => (
@@ -176,14 +170,6 @@ export default function UsersPage() {
           style={{ marginTop: 20 }}
         >
           <Form.Item
-            label="Username"
-            name="username"
-            rules={[{ required: true, message: "Vui lòng nhập username" }]}
-          >
-            <Input />
-          </Form.Item>
-
-          <Form.Item
             label="Email"
             name="email"
             rules={[
@@ -195,7 +181,7 @@ export default function UsersPage() {
           </Form.Item>
 
           <Form.Item
-            label="Phone"
+            label="Số điện thoại"
             name="phone"
             rules={[
               { required: true, message: "Vui lòng nhập số điện thoại!" },
@@ -204,9 +190,9 @@ export default function UsersPage() {
             <Input />
           </Form.Item>
           <Form.Item
-            label="Kiểu tài khoản"
+            label="Chức vụ"
             name="userType"
-            rules={[{ required: true, message: "Chọn kiểu tài khoản!" }]}
+            rules={[{ required: true, message: "Chọn Chức vụ!" }]}
           >
             <Select>
               <Option value="doctor">Bác sĩ</Option>

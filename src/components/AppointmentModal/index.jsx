@@ -46,8 +46,8 @@ const AppointmentModal = ({ visible, onCancel, onOk, selectedRecord }) => {
           rules={[{ required: true, message: "Vui lòng chọn loại dịch vụ!" }]}
         >
           <Select placeholder="Chọn loại dịch vụ">
-            <Option value="bao-hiem">Khám Bảo hiểm</Option>
-            <Option value="dich-vu">Khám Dịch vụ</Option>
+            <Option value="normal">Khám Thường</Option>
+            <Option value="service">Khám Dịch vụ</Option>
           </Select>
         </Form.Item>
         <Form.Item

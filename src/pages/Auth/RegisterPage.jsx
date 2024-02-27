@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { register } from "src/api/auth";
 import { useDispatch } from "react-redux";
 import { registerAuth } from "src/redux/slices/authSlice";
+import { TYPE_EMPLOYEE } from "src/utils";
 
 const RegisterPage = () => {
   const dispatch = useDispatch();
@@ -12,7 +13,7 @@ const RegisterPage = () => {
 
   const onFinish = async (values) => {
     //Trim values
-    values.username = values.username.trim();
+    values.phone = values.phone.trim();
     values.password = values.password.trim();
     const { user } = await dispatch(registerAuth(values)).unwrap();
 
@@ -30,7 +31,7 @@ const RegisterPage = () => {
         navigate("/sales");
         break;
       case TYPE_EMPLOYEE.user:
-        navigate("/medical");
+        navigate("/profile");
         break;
       default:
         navigate("/login");
@@ -70,18 +71,22 @@ const RegisterPage = () => {
           Đăng ký
         </Typography.Title>
         <Form.Item
-          name="username"
+          name="phone"
           rules={[
             {
               required: true,
-              message: "Nhập username!",
+              message: "Nhập số điện thoại!",
             },
+            {
+              pattern: new RegExp(/^\d{10,12}$/),
+              message: "Số điện thoại không hợp lệ!",
+            }
           ]}
         >
           <Input
             prefix={<UserOutlined className="site-form-item-icon" />}
             size="large"
-            placeholder="Username"
+            placeholder="Số điện thoại"
           />
         </Form.Item>
         <Form.Item

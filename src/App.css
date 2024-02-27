@@ -16,3 +16,16 @@ body {
   background-color: #acacac;
   border-radius: 10px;
 }
+
+.customDropdown .customDropdown-item {
+  padding: 12px;
+}
+
+.customDropdown .customDropdown-item:hover {
+  background-color: rgb(237, 237, 237);
+}
+
+.customDropdown-popover .ant-popover-inner {
+  overflow: hidden;
+  padding: 0;
+}

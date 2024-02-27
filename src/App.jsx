@@ -12,14 +12,17 @@ import { TYPE_EMPLOYEE } from "./utils";
 import { useDispatch, useSelector } from "react-redux";
 import UnauthorizedPage from "./pages/UnauthorizedPage";
 import { logoutAuth, reLoginAuth } from "./redux/slices/authSlice";
-import { Spin } from "antd";
-import ProfileMedicalPage from "./pages/ProfileMedicalPage";
+import { Spin, notification } from "antd";
+import ProfileMedicalPage from "./pages/ProfileMedical";
 import PatientPage from "./pages/Patient/PatientPage";
+import AppointmentPatientPage from "./pages/AppointmentPatient/AppointmentPatientPage";
+import ProfilePage from "./pages/Profile/ProfilePage";
 
 const PrivateRoute = ({ element, requiredPermission = [] }) => {
   const userType = useSelector((state) => state.auth?.user?.userType);
   const loading = useSelector((state) => state.auth?.loading);
-  const hasPermission = requiredPermission.includes(userType);
+  const hasPermission =
+    requiredPermission.length === 0 || requiredPermission.includes(userType);
 
   return hasPermission || loading ? (
     element
@@ -47,24 +50,41 @@ function LogoutPage() {
 function App() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const fullName = useSelector((state) => state.auth?.user?.fullName);
+  const userId = useSelector((state) => state.auth?.user?._id);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) {
+    if (!userId && token) {
       dispatch(reLoginAuth({ token }));
-    } else {
+    } else if (!token) {
       const path = window.location.pathname;
       if (!["/login", "/register"].includes(path)) {
         navigate("/login", { replace: true });
       }
     }
-  }, [dispatch, navigate]);
+  }, [dispatch, navigate, userId]);
+
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (userId && !fullName && path !== "/profile") {
+      navigate("/profile");
+      notification.warning({
+        message: "Thông báo",
+        description: "Vui lòng cập nhật thông tin cá nhân",
+      });
+    }
+  }, [userId, fullName, navigate]);
 
   return (
     <>
       <Routes>
         <Route path="/" element={<LayoutPage />}>
           <Route path="/" element={<h1>Home</h1>} />
+          <Route
+            path="/profile"
+            element={<PrivateRoute element={<ProfilePage />} />}
+          />
           <Route
             path="/users"
             element={
@@ -115,6 +135,15 @@ function App() {
             element={
               <PrivateRoute
                 element={<PatientPage />}
+                requiredPermission={[TYPE_EMPLOYEE.administrative]}
+              />
+            }
+          />
+          <Route
+            path="/appointments-patient"
+            element={
+              <PrivateRoute
+                element={<AppointmentPatientPage />}
                 requiredPermission={[TYPE_EMPLOYEE.administrative]}
               />
             }

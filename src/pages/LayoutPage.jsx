@@ -11,6 +11,7 @@ import {
   CalendarOutlined,
   FileOutlined,
   UserSwitchOutlined,
+  UsergroupAddOutlined,
 } from "@ant-design/icons";
 import {
   Layout,
@@ -69,7 +70,7 @@ const LayoutPage = () => {
   } = theme.useToken();
   const navigate = useNavigate();
   const {
-    user: { username, userType },
+    user: { phone, userType, fullName, photo },
   } = useSelector((state) => state.auth);
 
   const contentNoti = (
@@ -100,7 +101,7 @@ const LayoutPage = () => {
       case TYPE_EMPLOYEE.admin: {
         menuItems.push({
           key: "users",
-          icon: <UserOutlined />,
+          icon: <UsergroupAddOutlined />,
           label: "Người dùng",
           link: "/users",
         });
@@ -134,10 +135,10 @@ const LayoutPage = () => {
             link: "/profile-medical",
           },
           {
-            key: "examination",
+            key: "appointments-patient",
             icon: <GroupOutlined />,
             label: "Khám bệnh",
-            link: "/examination",
+            link: "/appointments-patient",
           },
         ];
 
@@ -245,16 +246,31 @@ const LayoutPage = () => {
               >
                 <Button type="text" icon={<BellOutlined size={2} />} />
               </Popover>
-              <Dropdown
-                menu={{
-                  items,
-                }}
-                placement="bottomRight"
-                arrow
-                trigger="click"
+
+              <Button
+                type="text"
+                style={{ paddingLeft: 30 }}
+                onClick={() => navigate("/profile")}
+                icon={
+                  photo ? (
+                    <img
+                      width={25}
+                      height={25}
+                      style={{
+                        borderRadius: "50%",
+                        position: "absolute",
+                        left: 5,
+                        top: 3,
+                      }}
+                      src={photo}
+                    />
+                  ) : (
+                    <UserOutlined />
+                  )
+                }
               >
-                <Button icon={<UserOutlined />}>{username}</Button>
-              </Dropdown>
+                {fullName || phone}
+              </Button>
             </Flex>
           </Flex>
         </Header>
