@@ -39,7 +39,8 @@ const ProfileMedicalPage = () => {
   });
   const [addVisiableAppointment, setAddVisiableAppointment] = useState(false);
   const [visiblePatientModal, setVisiblePatientModal] = useState(false);
-  const [viewVisibleAppointmentModal, setViewVisibleAppointmentModal] = useState(false);
+  const [viewVisibleAppointmentModal, setViewVisibleAppointmentModal] =
+    useState(false);
   const [reload, setReload] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -94,17 +95,20 @@ const ProfileMedicalPage = () => {
       key: "totalBooked",
       render: (totalBooked, record) => (
         <Flex gap={10}>
-          <Button
-            onClick={() => showViewAppointmentModal(record)}
-            icon={<EyeOutlined />}
-            style={{width: 70}}
-          >
-            <Typography.Text>{totalBooked}</Typography.Text>
-          </Button>
-          <Button
-            onClick={() => showAddAppointmentModal(record)}
-            icon={<PlusOutlined />}
-          ></Button>
+          <Tooltip title="Xem lịch khám">
+            <Button
+              onClick={() => showViewAppointmentModal(record)}
+              icon={<EyeOutlined />}
+            >
+              {/* <Typography.Text>{totalBooked}</Typography.Text> */}
+            </Button>
+          </Tooltip>
+          <Tooltip title="Tạo lịch khám">
+            <Button
+              onClick={() => showAddAppointmentModal(record)}
+              icon={<PlusOutlined />}
+            ></Button>
+          </Tooltip>
         </Flex>
       ),
     },
@@ -113,16 +117,16 @@ const ProfileMedicalPage = () => {
       key: "action",
       render: (text, record) => (
         <Flex gap={10}>
-          <Tooltip title="Chỉnh sửa">
-            <Button
-              onClick={() => showAddPatientModal(record)}
-              icon={<EditOutlined />}
-            />
-          </Tooltip>
           <Tooltip title="Xem chi tiết">
             <Button
               onClick={() => navigate("/profile-medical/" + record._id)}
               icon={<EyeOutlined />}
+            />
+          </Tooltip>
+          <Tooltip title="Chỉnh sửa">
+            <Button
+              onClick={() => showAddPatientModal(record)}
+              icon={<EditOutlined />}
             />
           </Tooltip>
         </Flex>

@@ -69,7 +69,16 @@ export const Specialties = [
   { id: 'other', name: 'Chưa xác định', description: 'Chuyên khoa không xác định hoặc đang chờ xác định.' },
 ];
 
+export const getSpecialtyName = (id) => {
+  return Specialties.find((specialty) => specialty.id === id)?.name;
+}
+
 export const SpecialtiesMap = Specialties.reduce((acc, specialty) => {
   acc[specialty.id] = specialty.name;
   return acc;
 }, {});
+
+export const Gender = {
+  'male': 'Nam',
+  'female': 'Nữ'
+}

@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Select, Typography, Popover, Input, List } from "antd";
-import { Specialties } from "src/utils";
+import { Specialties, getSpecialtyName } from "src/utils";
 import {
   ArrowDownOutlined,
   CaretDownOutlined,
@@ -8,21 +8,18 @@ import {
 } from "@ant-design/icons";
 const { Option } = Select;
 
-const SelectCustom = ({ onChange }) => {
+const SelectSpecialty = ({ specialty, onChange }) => {
   const [visible, setVisible] = useState(false);
-  const [selectedSpecialty, setSelectedSpecialty] = useState(null);
 
-  const handleSpecialtyChange = (specialty) => {
-    console.log(specialty);
+  const handleSpecialtyChange = (item) => {
     setVisible(false);
-    setSelectedSpecialty(specialty);
-    onChange(specialty.id);
+    onChange(item.id);
   };
 
   const customDropdown = (
     <List
       className="customDropdown"
-      style={{ width: 450, height: 300, overflow: "auto" }}
+      style={{ width: 472, maxWidth: "100%", height: 300, overflow: "auto" }}
       itemLayout="horizontal"
       dataSource={Specialties}
       renderItem={(specialty, index) => (
@@ -55,7 +52,7 @@ const SelectCustom = ({ onChange }) => {
         onClick={() => setVisible(!visible)}
         id="specialty"
         itemID="specialty"
-        value={selectedSpecialty?.name}
+        value={getSpecialtyName(specialty)}
         readOnly
         placeholder="Chọn chuyên khoa"
         suffix={<DownOutlined style={{ color: "#c2c2c2" }} />}
@@ -64,4 +61,4 @@ const SelectCustom = ({ onChange }) => {
   );
 };
 
-export default SelectCustom;
+export default SelectSpecialty;

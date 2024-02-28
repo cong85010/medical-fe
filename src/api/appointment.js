@@ -14,8 +14,8 @@ export const getListAppointment = async (patientId) => {
   return response;
 }
 
-export const getListTimeByDate = async (date) => {
-  const response = await instance.get(`${baseURL}/list-time?date=${date}`);
+export const getListTimeByDate = async (date, doctorId) => {
+  const response = await instance.get(`${baseURL}/list-time?date=${date}&doctorId=${doctorId}`);
 
   return response;
 }

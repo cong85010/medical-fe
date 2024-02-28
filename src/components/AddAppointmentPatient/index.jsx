@@ -22,8 +22,8 @@ import AddPatientModal from "src/components/AddPatientModal";
 import dayjs from "dayjs";
 import { getUsers } from "src/api/user";
 import { createAppointment, getListTimeByDate } from "src/api/appointment";
-import { Specialties } from "src/utils";
-import SelectCustom from "../SelectCustom";
+import SelectSpecialty from "../SelectSpecialty";
+import SelectDoctor from "../SelectDoctor";
 
 const Option = Select.Option;
 export default function AddAppointmentPatient({
@@ -40,12 +40,14 @@ export default function AddAppointmentPatient({
   const [loading, setLoading] = useState(false);
   const [selectedHour, setSelectedHour] = useState(null);
   const [listTimeSlots, setListTimeSlots] = useState([]);
+  const [specialty, setSpecialty] = useState('');
 
   useEffect(() => {
     if (visible) {
       setLoading(true);
       getListTimeByDate(
-        dayjs(form.getFieldValue("date")).format("DD/MM/YYYY")
+        dayjs(form.getFieldValue("date")).format("DD/MM/YYYY"),
+        form.getFieldValue("doctor")?._id || ""
       ).then(({ times }) => {
         setListTimeSlots(times);
         setLoading(false);
@@ -79,7 +81,10 @@ export default function AddAppointmentPatient({
         setLoading(true);
         const result = await createAppointment({
           patientName: patient?.fullName,
-          ...values,
+          patientId: values.patientId,
+          doctorId: values.doctor._id,
+          doctorName: values.doctor.fullName,
+          specialty: values.specialty,
           time: selectedHour,
           date: dayjs(values.date).format("DD/MM/YYYY"),
           status: "booked",
@@ -144,6 +149,10 @@ export default function AddAppointmentPatient({
     setRefreshData(!refreshData);
   };
 
+  const handleChangeDoctor = (item) => {
+    setRefreshData(!refreshData);
+  };
+
   return (
     <>
       <Modal
@@ -160,6 +169,7 @@ export default function AddAppointmentPatient({
         }}
       >
         <Form
+          id="appointmentForm"
           form={form}
           layout="vertical"
           name="appointmentForm"
@@ -192,15 +202,20 @@ export default function AddAppointmentPatient({
               },
             ]}
           >
-            {/* <Input hidden /> */}
-            {/* <Select placeholder="Chọn chuyên khoa">
-              {Specialties.map((specialty) => (
-                <Option key={specialty.id} value={specialty.id} label={specialty.name} description={specialty.description}>
-                {specialty.name}
-              </Option>
-              ))}
-            </Select> */}
-            <SelectCustom />
+            <SelectSpecialty onChange={(item) => setSpecialty(item)}/>
+          </Form.Item>
+          <Form.Item
+            label="Chọn bác sĩ"
+            name="doctor"
+            valuePropName="doctor"
+            rules={[
+              {
+                required: true,
+                message: "Vui lòng chọn bác sĩ!",
+              },
+            ]}
+          >
+            <SelectDoctor onChange={handleChangeDoctor} specialty={specialty} />
           </Form.Item>
           <Flex gap={20}>
             <Form.Item
@@ -240,7 +255,7 @@ export default function AddAppointmentPatient({
                   style={{ width: "100%" }}
                   type="warning"
                   message="Tạm thời hết lịch"
-                  description="Hãy thử chọn ngày khác!"
+                  description="Hãy chọn ngày khác!"
                 />
               )}
               {listTimeSlots.map((hour) => (
