@@ -10,7 +10,7 @@ import { useEffect } from "react";
 import { getUsers } from "src/api/user";
 const { Option } = Select;
 
-const SelectDoctor = ({ onChange, specialty }) => {
+const SelectDoctorMemo = ({ onChange, specialty }) => {
   const [visible, setVisible] = useState(false);
   const [doctor, setDoctor] = useState(null);
   const [listDoctor, setListDoctor] = useState([]);
@@ -77,4 +77,4 @@ const SelectDoctor = ({ onChange, specialty }) => {
   );
 };
 
-export default SelectDoctor;
+export const SelectDoctor = React.memo(SelectDoctorMemo);

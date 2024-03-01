@@ -23,7 +23,7 @@ import dayjs from "dayjs";
 import { getUsers } from "src/api/user";
 import { createAppointment, getListTimeByDate } from "src/api/appointment";
 import SelectSpecialty from "../SelectSpecialty";
-import SelectDoctor from "../SelectDoctor";
+import { SelectDoctor } from "../SelectDoctor";
 
 const Option = Select.Option;
 export default function AddAppointmentPatient({
@@ -41,19 +41,20 @@ export default function AddAppointmentPatient({
   const [selectedHour, setSelectedHour] = useState(null);
   const [listTimeSlots, setListTimeSlots] = useState([]);
   const [specialty, setSpecialty] = useState('');
+  const [doctorId, setDoctorId] = useState('');
 
   useEffect(() => {
     if (visible) {
       setLoading(true);
       getListTimeByDate(
         dayjs(form.getFieldValue("date")).format("DD/MM/YYYY"),
-        form.getFieldValue("doctor")?._id || ""
+        doctorId || ""
       ).then(({ times }) => {
         setListTimeSlots(times);
         setLoading(false);
       });
     }
-  }, [form, refreshData, visible]);
+  }, [form, refreshData, doctorId, visible]);
 
   const handleButtonClick = (hour) => {
     setSelectedHour(hour);
@@ -150,6 +151,7 @@ export default function AddAppointmentPatient({
   };
 
   const handleChangeDoctor = (item) => {
+    setDoctorId(item._id);
     setRefreshData(!refreshData);
   };
 

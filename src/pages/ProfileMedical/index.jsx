@@ -157,8 +157,19 @@ const ProfileMedicalPage = () => {
     fetchData();
   }, [reload, pagination.page]);
 
-  const handleAppointmentCancel = () => {
+  const handleAddAppointmentCancel = () => {
     setAddVisiableAppointment(false);
+    setSelectedPatient(null);
+  };
+
+  const handleViewAppointmentCancel = () => {
+    setViewVisibleAppointmentModal(false);
+    setSelectedPatient(null);
+  };
+
+  const handleAddPatientCancel = () => {
+    setVisiblePatientModal(false);
+    setSelectedPatient(null);
   };
 
   const handleCreatedPatientModal = (result) => {
@@ -226,18 +237,18 @@ const ProfileMedicalPage = () => {
       />
       <AddAppointmentPatient
         visible={addVisiableAppointment}
-        onCancel={handleAppointmentCancel}
+        onCancel={handleAddAppointmentCancel}
         onFinish={handleAppointmentOk}
         selectedPatient={selectedPatient}
       />
       <AddPatientModal
         visible={visiblePatientModal}
-        onCancel={() => setVisiblePatientModal(false)}
+        onCancel={handleAddPatientCancel}
         onFinish={handleCreatedPatientModal}
         selectedPatient={selectedPatient}
       />
       <ViewScheduleModal
-        onCancel={() => setViewVisibleAppointmentModal(false)}
+        onCancel={handleViewAppointmentCancel}
         visible={viewVisibleAppointmentModal}
         selectedPatient={selectedPatient}
       />
