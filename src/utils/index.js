@@ -17,10 +17,24 @@ export const TYPE_EMPLOYEE_STR = {
 };
 
 export const STATUS_BOOKING = {
+  booked: "booked",
+  rejected: "rejected",
+  cancelled: "cancelled",
+  actived: "actived",
+};
+
+export const STATUS_BOOKING_STR = {
   booked: "Đã đặt",
   rejected: "Từ chối",
-  canceled: "Đã hủy",
+  cancelled: "Đã hủy",
   actived: "Đã xử lý",
+};
+
+export const STATUS_BOOKING_COLOR = {
+  booked: "blue",
+  rejected: "red",
+  cancelled: "red",
+  actived: "green",
 };
 
 export const colorOfType = {
@@ -57,21 +71,62 @@ export const beforeUpload = (file) => {
 };
 
 export const Specialties = [
-  { id: 'general', name: 'Nội trú', description: 'Kiểm tra và điều trị các vấn đề sức khỏe tổng quát.' },
-  { id: 'pediatrics', name: 'Nhi khoa', description: 'Chăm sóc sức khỏe cho trẻ em và phát hiện sớm các vấn đề sức khỏe.' },
-  { id: 'orthopedics', name: 'Chỉnh hình', description: 'Chăm sóc và điều trị vấn đề về cơ bắp và xương.' },
-  { id: 'dermatology', name: 'Da liễu', description: 'Chẩn đoán và điều trị các vấn đề về da, tóc, và móng.' },
-  { id: 'ophthalmology', name: 'Mắt', description: 'Kiểm tra và chăm sóc sức khỏe của mắt và thị lực.' },
-  { id: 'dentistry', name: 'Nha khoa', description: 'Chăm sóc và điều trị vấn đề về nướu, răng, và miệng.' },
-  { id: 'psychiatry', name: 'Tâm thần học', description: 'Chẩn đoán và điều trị các vấn đề về tâm lý và tâm thần.' },
-  { id: 'oncology', name: 'Ung thư', description: 'Chẩn đoán và điều trị các loại ung thư.' },
-  { id: 'neurology', name: 'Thần kinh học', description: 'Chăm sóc và điều trị vấn đề về hệ thần kinh.' },
-  { id: 'other', name: 'Chưa xác định', description: 'Chuyên khoa không xác định hoặc đang chờ xác định.' },
+  {
+    id: "general",
+    name: "Nội trú",
+    description: "Kiểm tra và điều trị các vấn đề sức khỏe tổng quát.",
+  },
+  {
+    id: "pediatrics",
+    name: "Nhi khoa",
+    description:
+      "Chăm sóc sức khỏe cho trẻ em và phát hiện sớm các vấn đề sức khỏe.",
+  },
+  {
+    id: "orthopedics",
+    name: "Chỉnh hình",
+    description: "Chăm sóc và điều trị vấn đề về cơ bắp và xương.",
+  },
+  {
+    id: "dermatology",
+    name: "Da liễu",
+    description: "Chẩn đoán và điều trị các vấn đề về da, tóc, và móng.",
+  },
+  {
+    id: "ophthalmology",
+    name: "Mắt",
+    description: "Kiểm tra và chăm sóc sức khỏe của mắt và thị lực.",
+  },
+  {
+    id: "dentistry",
+    name: "Nha khoa",
+    description: "Chăm sóc và điều trị vấn đề về nướu, răng, và miệng.",
+  },
+  {
+    id: "psychiatry",
+    name: "Tâm thần học",
+    description: "Chẩn đoán và điều trị các vấn đề về tâm lý và tâm thần.",
+  },
+  {
+    id: "oncology",
+    name: "Ung thư",
+    description: "Chẩn đoán và điều trị các loại ung thư.",
+  },
+  {
+    id: "neurology",
+    name: "Thần kinh học",
+    description: "Chăm sóc và điều trị vấn đề về hệ thần kinh.",
+  },
+  {
+    id: "other",
+    name: "Chưa xác định",
+    description: "Chuyên khoa không xác định hoặc đang chờ xác định.",
+  },
 ];
 
 export const getSpecialtyName = (id) => {
   return Specialties.find((specialty) => specialty.id === id)?.name;
-}
+};
 
 export const SpecialtiesMap = Specialties.reduce((acc, specialty) => {
   acc[specialty.id] = specialty.name;
@@ -79,6 +134,22 @@ export const SpecialtiesMap = Specialties.reduce((acc, specialty) => {
 }, {});
 
 export const Gender = {
-  'male': 'Nam',
-  'female': 'Nữ'
+  male: "Nam",
+  female: "Nữ",
+};
+
+export function isTimeBeforeCurrentByHours(date, time, hours) {
+  // Chuyển đổi thời gian cụ thể thành đối tượng dayjs
+  const timeMedical = dayjs(`${date} ${time}`, "DD/MM/YYYY HH:mm");
+
+  // Lấy thời gian hiện tại
+  const currentTime = dayjs();
+
+  // Thêm số giờ cần so sánh
+  const adjustedCurrentTime = timeMedical.subtract(hours, "hour");
+
+  // So sánh thời gian
+  return currentTime.isBefore(adjustedCurrentTime);
 }
+
+export const TIME_CAN_EDIT = 2;

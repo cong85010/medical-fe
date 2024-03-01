@@ -10,6 +10,7 @@ import {
   Modal,
   Row,
   Select,
+  Space,
   Spin,
   TimePicker,
   Typography,
@@ -21,16 +22,20 @@ import { PlusOutlined, ReloadOutlined } from "@ant-design/icons";
 import AddPatientModal from "src/components/AddPatientModal";
 import dayjs from "dayjs";
 import { getUsers } from "src/api/user";
-import { createAppointment, getListTimeByDate } from "src/api/appointment";
+import {
+  createAppointment,
+  getListTimeByDate,
+  updateAppointment,
+} from "src/api/appointment";
 import SelectSpecialty from "../SelectSpecialty";
 import { SelectDoctor } from "../SelectDoctor";
 
-const Option = Select.Option;
 export default function AddAppointmentPatient({
   visible,
   onCancel,
   onFinish,
   selectedPatient: patient,
+  selectedAppointent = {},
 }) {
   const [form] = Form.useForm();
 
@@ -40,8 +45,8 @@ export default function AddAppointmentPatient({
   const [loading, setLoading] = useState(false);
   const [selectedHour, setSelectedHour] = useState(null);
   const [listTimeSlots, setListTimeSlots] = useState([]);
-  const [specialty, setSpecialty] = useState('');
-  const [doctorId, setDoctorId] = useState('');
+  const [specialty, setSpecialty] = useState("");
+  const [doctorId, setDoctorId] = useState("");
 
   useEffect(() => {
     if (visible) {
@@ -62,11 +67,24 @@ export default function AddAppointmentPatient({
 
   useEffect(() => {
     if (patient && visible) {
-      form.setFieldsValue({
-        patientId: patient._id,
-      });
+      if (selectedAppointent?.patientId) {
+        // setSelectedHour(selectedAppointent.time);
+        form.setFieldsValue({
+          ...selectedAppointent,
+          date: dayjs(selectedAppointent.date, "DD/MM/YYYY"),
+          doctor: {
+            _id: selectedAppointent.doctorId,
+            fullName: selectedAppointent.doctorName,
+          },
+        });
+        setRefreshData((prev) => !prev);
+      } else {
+        form.setFieldsValue({
+          patientId: patient._id,
+        });
+      }
     }
-  }, [form, patient, visible]);
+  }, [form, patient, selectedAppointent, visible]);
 
   const handleAppointmentOk = () => {
     if (selectedHour === null) {
@@ -80,22 +98,41 @@ export default function AddAppointmentPatient({
       .validateFields()
       .then(async (values) => {
         setLoading(true);
-        const result = await createAppointment({
-          patientName: patient?.fullName,
-          patientId: values.patientId,
-          doctorId: values.doctor._id,
-          doctorName: values.doctor.fullName,
-          specialty: values.specialty,
-          time: selectedHour,
-          date: dayjs(values.date).format("DD/MM/YYYY"),
-          status: "booked",
-        });
-        form.resetFields();
-        setSelectedHour(null);
-        notification.success({
-          message: "Đặt lịch khám thành công",
-        });
-        onFinish(result);
+
+        if (selectedAppointent?._id) {
+          const result = await updateAppointment({
+            ...selectedAppointent,
+            doctorId: values.doctor._id,
+            doctorName: values.doctor.fullName,
+            specialty: values.specialty,
+            time: selectedHour,
+            date: dayjs(values.date).format("DD/MM/YYYY"),
+            status: "booked",
+          });
+          form.resetFields();
+          setSelectedHour(null);
+          notification.success({
+            message: "Cập nhật lịch khám thành công",
+          });
+          onFinish(result);
+        } else {
+          const result = await createAppointment({
+            patientName: patient?.fullName,
+            patientId: values.patientId,
+            doctorId: values.doctor._id,
+            doctorName: values.doctor.fullName,
+            specialty: values.specialty,
+            time: selectedHour,
+            date: dayjs(values.date).format("DD/MM/YYYY"),
+            status: "booked",
+          });
+          form.resetFields();
+          setSelectedHour(null);
+          notification.success({
+            message: "Đặt lịch khám thành công",
+          });
+          onFinish(result);
+        }
       })
       .catch((errorInfo) => {
         console.log("Failed:", errorInfo);
@@ -107,8 +144,7 @@ export default function AddAppointmentPatient({
   };
 
   function onCancelModal() {
-    form.resetFields();
-    onCancel();
+    onCancel(() => form.resetFields());
   }
 
   const handleCreatedPatientModal = async (record) => {
@@ -158,11 +194,11 @@ export default function AddAppointmentPatient({
   return (
     <>
       <Modal
-        title="Tạo lịch khám"
+        title={selectedAppointent?._id ? "Cập nhật lịch khám" : "Đặt lịch khám"}
         open={visible}
         onOk={handleAppointmentOk}
         onCancel={onCancelModal}
-        okText="Tạo lịch khám"
+        okText={selectedAppointent?._id ? "Cập nhật" : "Đặt lịch"}
         cancelText="Hủy"
         destroyOnClose
         okButtonProps={{
@@ -187,9 +223,11 @@ export default function AddAppointmentPatient({
             fieldId="patientId"
           >
             <DebounceSelect
+              disabled={selectedAppointent?.patientId}
               selectId="patientId"
               placeholder="Chọn bệnh nhân"
               fetchOptions={fetchPatientList}
+              initValue={selectedAppointent?.patientId || patient?._id}
               style={{ width: "100%" }}
             />
           </Form.Item>
@@ -204,7 +242,7 @@ export default function AddAppointmentPatient({
               },
             ]}
           >
-            <SelectSpecialty onChange={(item) => setSpecialty(item)}/>
+            <SelectSpecialty onChange={(item) => setSpecialty(item)} />
           </Form.Item>
           <Form.Item
             label="Chọn bác sĩ"
@@ -235,9 +273,17 @@ export default function AddAppointmentPatient({
               label="Thời gian dự kiến"
               style={{ alignItems: "center", justifyContent: "center" }}
             >
-              <Typography.Text strong>{selectedHour}</Typography.Text>
+              <Space>
+                {selectedAppointent?.time && (
+                  <Typography.Text strong>
+                    {selectedAppointent?.time} cũ | mới
+                  </Typography.Text>
+                )}
+
+                <Typography.Text strong>{selectedHour}</Typography.Text>
+              </Space>
             </Form.Item>
-            <Form.Item
+            {/* <Form.Item
               label="Làm mới thời gian"
               style={{ alignItems: "center", justifyContent: "center" }}
             >
@@ -248,7 +294,7 @@ export default function AddAppointmentPatient({
               >
                 Làm mới
               </Button>
-            </Form.Item>
+            </Form.Item> */}
           </Flex>
           <Spin spinning={loading}>
             <Row gutter={[10, 10]}>

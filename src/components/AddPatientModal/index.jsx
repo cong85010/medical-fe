@@ -16,13 +16,13 @@ const AddPatientModal = ({ visible, onCancel, onFinish, selectedPatient }) => {
   const [form] = Form.useForm();
 
   useEffect(() => {
-    if (selectedPatient && form) {
+    if (visible && selectedPatient && form) {
       form.setFieldsValue({
         ...selectedPatient,
         birthday: dayjs(selectedPatient.birthday),
       });
     }
-  }, [form, selectedPatient]);
+  }, [form, selectedPatient, visible]);
 
   const handleOk = () => {
     form

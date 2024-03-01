@@ -9,10 +9,14 @@ function DebounceSelectMemo({
   childrenRight = null,
   refreshData = false,
   selectId = null,
+  initValue,
   ...props
 }) {
   const [fetching, setFetching] = useState(false);
-  const [options, setOptions] = useState([]);
+  const [options, setOptions] = useState([{
+    value: initValue,
+    label: 'Đang tải'
+  }]);
   const fetchRef = useRef(0);
 
   const debounceFetcher = useMemo(() => {
@@ -49,8 +53,8 @@ function DebounceSelectMemo({
       <Select
         id={selectId}
         showSearch
-        // labelInValue
         filterOption={false}
+        loading={fetching}
         onSearch={debounceFetcher}
         notFoundContent={fetching ? <Spin size="small" /> : null}
         {...props}

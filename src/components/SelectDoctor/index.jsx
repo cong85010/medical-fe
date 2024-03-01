@@ -10,9 +10,9 @@ import { useEffect } from "react";
 import { getUsers } from "src/api/user";
 const { Option } = Select;
 
-const SelectDoctorMemo = ({ onChange, specialty }) => {
+const SelectDoctorMemo = ({ onChange, specialty, doctor: doctorForm }) => {
   const [visible, setVisible] = useState(false);
-  const [doctor, setDoctor] = useState(null);
+  const [doctor, setDoctor] = useState(doctorForm || null);
   const [listDoctor, setListDoctor] = useState([]);
 
   const handleDoctorChange = (doctor) => {
@@ -23,7 +23,12 @@ const SelectDoctorMemo = ({ onChange, specialty }) => {
 
   useEffect(() => {
     const initData = async () => {
-      setDoctor(null);
+      if (doctorForm) {
+        setDoctor(doctorForm);
+      } else {
+        setDoctor(null);
+      }
+
       setListDoctor([]);
       const { users } = await getUsers({
         userType: "doctor",
@@ -33,7 +38,7 @@ const SelectDoctorMemo = ({ onChange, specialty }) => {
       setListDoctor(users);
     };
     initData();
-  }, [specialty]);
+  }, [specialty, doctorForm]);
 
   const customDropdown = (
     <List
@@ -66,8 +71,8 @@ const SelectDoctorMemo = ({ onChange, specialty }) => {
     >
       <Input
         onClick={() => setVisible(!visible)}
-        id="doctorName"
-        itemID="doctorName"
+        id="doctor"
+        itemID="doctor"
         value={doctor?.fullName}
         readOnly
         placeholder="Chọn bác sĩ"
