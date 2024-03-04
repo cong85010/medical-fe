@@ -153,3 +153,9 @@ export function isTimeBeforeCurrentByHours(date, time, hours) {
 }
 
 export const TIME_CAN_EDIT = 2;
+
+export const FORMAT_DATE = "DD/MM/YYYY";
+
+export const getToday = () => {
+  return dayjs().format(FORMAT_DATE);
+};

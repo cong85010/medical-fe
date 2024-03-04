@@ -15,8 +15,9 @@ import { logoutAuth, reLoginAuth } from "./redux/slices/authSlice";
 import { Spin, notification } from "antd";
 import ProfileMedicalPage from "./pages/ProfileMedical";
 import PatientPage from "./pages/Patient/PatientPage";
-import AppointmentPatientPage from "./pages/AppointmentPatient/AppointmentPatientPage";
+import AppointmentPatientPage from "./pages/AppointmentPatient";
 import ProfilePage from "./pages/Profile/ProfilePage";
+import AppointmentWaitingPatient from "./pages/AppointmentWaitingPatient";
 
 const PrivateRoute = ({ element, requiredPermission = [] }) => {
   const userType = useSelector((state) => state.auth?.user?.userType);
@@ -144,6 +145,15 @@ function App() {
             element={
               <PrivateRoute
                 element={<AppointmentPatientPage />}
+                requiredPermission={[TYPE_EMPLOYEE.administrative]}
+              />
+            }
+          />
+          <Route
+            path="/appointments-waiting"
+            element={
+              <PrivateRoute
+                element={<AppointmentWaitingPatient />}
                 requiredPermission={[TYPE_EMPLOYEE.administrative]}
               />
             }

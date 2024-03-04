@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Select, Typography, Popover, Input, List } from "antd";
-import { Specialties } from "src/utils";
+import { Select, Typography, Popover, Input, List, Space } from "antd";
+import { Gender, Specialties, TYPE_EMPLOYEE_STR, birthdayAndAge } from "src/utils";
 import {
   ArrowDownOutlined,
   CaretDownOutlined,
@@ -51,7 +51,11 @@ const SelectDoctorMemo = ({ onChange, specialty, doctor: doctorForm }) => {
           className="customDropdown-item"
           onClick={() => handleDoctorChange(item)}
         >
-          <List.Item.Meta title={item.fullName} description={item.userType} />
+          <List.Item.Meta title={item.fullName} description={<Space>
+           <Typography.Text>{TYPE_EMPLOYEE_STR[item.userType]}</Typography.Text>
+           -
+           <Typography.Text>{Gender[item?.gender]}</Typography.Text>
+          </Space>} />
         </List.Item>
       )}
     />

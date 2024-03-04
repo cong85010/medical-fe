@@ -12,6 +12,8 @@ import {
   FileOutlined,
   UserSwitchOutlined,
   UsergroupAddOutlined,
+  ClockCircleOutlined,
+  CheckCircleOutlined,
 } from "@ant-design/icons";
 import {
   Layout,
@@ -139,6 +141,12 @@ const LayoutPage = () => {
             icon: <GroupOutlined />,
             label: "Khám bệnh",
             link: "/appointments-patient",
+          },
+          {
+            key: "appointments-wating",
+            icon: <CheckCircleOutlined />,
+            label: "Phê duyệt",
+            link: "/appointments-waiting",
           },
         ];
 

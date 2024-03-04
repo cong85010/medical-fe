@@ -20,8 +20,11 @@ export const updateStatusAppointment = async (body) => {
   return response;
 };
 
-export const getListAppointment = async (patientId) => {
-  const response = await instance.get(`${baseURL}?patientId=${patientId}`);
+export const getListAppointment = async (params) => {
+  const paramsStr = Object.entries(params)
+    .map((param) => `${param[0]}=${param[1]}`)
+    .join("&");
+  const response = await instance.get(`${baseURL}?${paramsStr}`);
 
   return response;
 };

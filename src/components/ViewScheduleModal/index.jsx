@@ -118,8 +118,11 @@ const ViewScheduleModal = ({
     },
     {
       title: "Bác sĩ",
-      dataIndex: "doctorName",
-      key: "doctorName",
+      dataIndex: "doctorId",
+      key: "doctorId",
+      render: (doctor) => {
+        return doctor?.fullName || "Chưa xác định";
+      },
     },
     {
       title: "Trạng thái",
@@ -172,7 +175,9 @@ const ViewScheduleModal = ({
   useEffect(() => {
     const initData = async () => {
       // Replace this with the actual API call to fetch appointments
-      const { appointments } = await getListAppointment(selectedPatient._id);
+      const { appointments } = await getListAppointment({
+        patientId: selectedPatient?._id,
+      });
       setAppointments(appointments);
     };
     if (visible && selectedPatient?._id) {

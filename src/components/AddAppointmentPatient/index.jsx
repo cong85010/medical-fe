@@ -29,6 +29,7 @@ import {
 } from "src/api/appointment";
 import SelectSpecialty from "../SelectSpecialty";
 import { SelectDoctor } from "../SelectDoctor";
+import { FORMAT_DATE } from "src/utils";
 
 export default function AddAppointmentPatient({
   visible,
@@ -52,7 +53,7 @@ export default function AddAppointmentPatient({
     if (visible) {
       setLoading(true);
       getListTimeByDate(
-        dayjs(form.getFieldValue("date")).format("DD/MM/YYYY"),
+        dayjs(form.getFieldValue("date")).format(FORMAT_DATE),
         doctorId || ""
       ).then(({ times }) => {
         setListTimeSlots(times);
@@ -71,11 +72,9 @@ export default function AddAppointmentPatient({
         // setSelectedHour(selectedAppointent.time);
         form.setFieldsValue({
           ...selectedAppointent,
-          date: dayjs(selectedAppointent.date, "DD/MM/YYYY"),
-          doctor: {
-            _id: selectedAppointent.doctorId,
-            fullName: selectedAppointent.doctorName,
-          },
+          patientId: selectedAppointent?.patientId._id,
+          date: dayjs(selectedAppointent.date, FORMAT_DATE),
+          doctor: selectedAppointent.doctorId,
         });
         setRefreshData((prev) => !prev);
       } else {
@@ -103,10 +102,9 @@ export default function AddAppointmentPatient({
           const result = await updateAppointment({
             ...selectedAppointent,
             doctorId: values.doctor._id,
-            doctorName: values.doctor.fullName,
             specialty: values.specialty,
             time: selectedHour,
-            date: dayjs(values.date).format("DD/MM/YYYY"),
+            date: dayjs(values.date).format(FORMAT_DATE),
             status: "booked",
           });
           form.resetFields();
@@ -117,13 +115,11 @@ export default function AddAppointmentPatient({
           onFinish(result);
         } else {
           const result = await createAppointment({
-            patientName: patient?.fullName,
             patientId: values.patientId,
             doctorId: values.doctor._id,
-            doctorName: values.doctor.fullName,
             specialty: values.specialty,
             time: selectedHour,
-            date: dayjs(values.date).format("DD/MM/YYYY"),
+            date: dayjs(values.date).format(FORMAT_DATE),
             status: "booked",
           });
           form.resetFields();
@@ -160,7 +156,7 @@ export default function AddAppointmentPatient({
         return {
           label: `${item.fullName || "Chưa xác định"} - ${item.phone} - ${dayjs(
             item.birthday
-          ).format("DD/MM/YYYY")}`,
+          ).format(FORMAT_DATE)}`,
           value: item._id,
         };
       });
@@ -227,7 +223,7 @@ export default function AddAppointmentPatient({
               selectId="patientId"
               placeholder="Chọn bệnh nhân"
               fetchOptions={fetchPatientList}
-              initValue={selectedAppointent?.patientId || patient?._id}
+              initValue={selectedAppointent?.patientId?._id || patient?._id}
               style={{ width: "100%" }}
             />
           </Form.Item>
@@ -264,7 +260,7 @@ export default function AddAppointmentPatient({
               rules={[{ required: true, message: "Vui lòng chọn ngày khám!" }]}
             >
               <DatePicker
-                format="DD/MM/YYYY"
+                format={FORMAT_DATE}
                 onChange={handleChangeDate}
                 disabledDate={disabledDate}
               />

@@ -3,6 +3,8 @@ import {
   LockOutlined,
   PlusCircleFilled,
   PlusCircleOutlined,
+  ReloadOutlined,
+  SearchOutlined,
   UnlockOutlined,
 } from "@ant-design/icons";
 import {
@@ -23,6 +25,7 @@ import {
 } from "antd";
 import dayjs from "dayjs";
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   changeActiveStatus,
   createUser,
@@ -47,12 +50,23 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState();
   const [users, setUsers] = useState([]);
   const [reload, setReload] = useState(false);
+  const [filter, setFilter] = useState({
+    userTypes: [
+      TYPE_EMPLOYEE.doctor,
+      TYPE_EMPLOYEE.administrative,
+      TYPE_EMPLOYEE.sales,
+    ],
+    activeStatuses: [true],
+  });
   const [pagination, setPagination] = useState({
     total: 0,
     pageSize: 10,
     current: 1,
   });
   const [isShowSpecialty, setIsShowSpecialty] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [keyword, setKeyword] = useState("");
+  const navigate = useNavigate();
 
   const columns = [
     {
@@ -93,6 +107,25 @@ export default function UsersPage() {
     {
       title: "Chức vụ",
       key: "userType",
+      filters: [
+        {
+          text: TYPE_EMPLOYEE_STR[TYPE_EMPLOYEE.doctor],
+          value: TYPE_EMPLOYEE.doctor,
+        },
+        {
+          text: TYPE_EMPLOYEE_STR[TYPE_EMPLOYEE.administrative],
+          value: TYPE_EMPLOYEE.administrative,
+        },
+        {
+          text: TYPE_EMPLOYEE_STR[TYPE_EMPLOYEE.sales],
+          value: TYPE_EMPLOYEE.sales,
+        },
+        {
+          text: TYPE_EMPLOYEE_STR[TYPE_EMPLOYEE.user],
+          value: TYPE_EMPLOYEE.user,
+        },
+      ],
+      filteredValue: filter.userTypes,
       dataIndex: "userType",
       render: (_, { userType }) => (
         <>
@@ -106,6 +139,17 @@ export default function UsersPage() {
       title: "Trạng thái",
       dataIndex: "activeStatus",
       key: "activeStatus",
+      filters: [
+        {
+          text: "Đang hoạt động",
+          value: true,
+        },
+        {
+          text: "Dừng hoạt động",
+          value: false,
+        },
+      ],
+      filteredValue: filter.activeStatuses,
       render: (_, { activeStatus }) => (
         <>
           <Tag color={activeStatus ? "green" : "red"} key={activeStatus}>
@@ -159,9 +203,13 @@ export default function UsersPage() {
 
   const handleEdit = async (record) => {
     try {
+      console.log(record);
       setSelectedUser(record);
       setIsShowSpecialty(record.userType === TYPE_EMPLOYEE.doctor);
-      form.setFieldsValue(record);
+      form.setFieldsValue({
+        ...record,
+        birthday: dayjs(record.birthday),
+      });
       setIsVisible(true);
     } catch (error) {
       console.log(error);
@@ -196,14 +244,28 @@ export default function UsersPage() {
   };
 
   useEffect(() => {
-    const initData = async () => {
-      const result = await getUsers();
-      setUsers(result.users);
-      setPagination({ ...pagination, total: result.total });
-    };
+    const fetchData = async () => {
+      try {
 
-    initData();
-  }, [reload]);
+        setLoading(true);
+        const result = await getUsers({
+          searchKey: keyword,
+          limit: pagination.pageSize,
+          skip: pagination.pageSize * (pagination.current - 1),
+          ...filter,
+        });
+        setUsers(result?.users);
+        setPagination({
+          ...pagination,
+          total: result?.total,
+        });
+        setLoading(false);
+      } catch (error) {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [reload, pagination.page, filter]);
 
   const handleCancel = () => {
     setIsVisible(false);
@@ -213,10 +275,42 @@ export default function UsersPage() {
     setIsShowSpecialty(value === TYPE_EMPLOYEE.doctor);
   };
 
+  const handleResearch = () => {
+    setKeyword("");
+    setReload(!reload);
+  };
+
+  const handleTableChange = (pagi, filters, sorter) => {
+    setPagination(pagi);
+
+    setFilter((prev) => {
+      return {
+        userTypes: filters.userType,
+        activeStatuses: filters.activeStatus,
+      };
+    });
+  };
+
   return (
     <div>
       <Title title="Quản lý người dùng" />
-      <Flex justify="end" style={{ marginBottom: 10 }}>
+      <Flex gap={10} justify="space-between" style={{ marginBottom: 10 }}>
+        <Flex gap={10}>
+          <Tooltip title="Khôi phục">
+            <Button onClick={handleResearch}>
+              <ReloadOutlined />
+            </Button>
+          </Tooltip>
+          <Input
+            value={keyword}
+            placeholder="Tìm kiếm"
+            onChange={(e) => setKeyword(e.target.value)}
+            onPressEnter={() => setReload(!reload)}
+          />
+          <Button type="primary" onClick={() => setReload(!reload)}>
+            <SearchOutlined />
+          </Button>
+        </Flex>
         <Button
           type="primary"
           icon={<PlusCircleFilled />}
@@ -225,7 +319,12 @@ export default function UsersPage() {
           Thêm người dùng
         </Button>
       </Flex>
-      <Table columns={columns} dataSource={users} />
+      <Table
+        columns={columns}
+        dataSource={users}
+        pagination={pagination}
+        onChange={handleTableChange}
+      />
       <Modal
         open={isVisible}
         title="Thêm người dùng"
