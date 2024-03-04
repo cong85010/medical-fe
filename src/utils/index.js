@@ -46,7 +46,7 @@ export const colorOfType = {
 };
 
 export const birthdayAndAge = (date) => {
-  return `${dayjs(date).format("DD/MM/YYYY")}- ${dayjs().diff(
+  return `${dayjs(date).format(FORMAT_DATE)}- ${dayjs().diff(
     date,
     "year"
   )} tuổi`;
@@ -155,7 +155,16 @@ export function isTimeBeforeCurrentByHours(date, time, hours) {
 export const TIME_CAN_EDIT = 2;
 
 export const FORMAT_DATE = "DD/MM/YYYY";
+export const FORMAT_TIME = "HH:mm";
 
 export const getToday = () => {
   return dayjs().format(FORMAT_DATE);
+};
+
+export const formatedDate = (date) => {
+  return dayjs(date, FORMAT_DATE).format(FORMAT_DATE);
+};
+
+export const formatedTime = (date) => {
+  return dayjs(date, FORMAT_TIME).format(FORMAT_TIME);
 };

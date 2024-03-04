@@ -145,7 +145,7 @@ const RegisterPage = () => {
             size="large"
             style={{ marginBottom: 10 }}
           >
-            Register
+            Đăng ký
           </Button>
           Hoặc <Link to="/login">Đăng nhập</Link>
         </Form.Item>

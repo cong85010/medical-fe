@@ -29,7 +29,8 @@ import {
 } from "src/api/appointment";
 import SelectSpecialty from "../SelectSpecialty";
 import { SelectDoctor } from "../SelectDoctor";
-import { FORMAT_DATE } from "src/utils";
+import { FORMAT_DATE, formatedDate, formatedTime, getSpecialtyName } from "src/utils";
+import { formatDate } from "@fullcalendar/core";
 
 export default function AddAppointmentPatient({
   visible,
@@ -37,9 +38,9 @@ export default function AddAppointmentPatient({
   onFinish,
   selectedPatient: patient,
   selectedAppointent = {},
+  isPatient = false,
 }) {
   const [form] = Form.useForm();
-
   const [isCreatePatientModal, setIsCreatePatientModal] = useState(false);
 
   const [refreshData, setRefreshData] = useState(false);
@@ -115,7 +116,7 @@ export default function AddAppointmentPatient({
           onFinish(result);
         } else {
           const result = await createAppointment({
-            patientId: values.patientId,
+            patientId: isPatient ? patient._id : values.patientId,
             doctorId: values.doctor._id,
             specialty: values.specialty,
             time: selectedHour,
@@ -187,10 +188,13 @@ export default function AddAppointmentPatient({
     setRefreshData(!refreshData);
   };
 
+  console.log('====================================');
+  console.log(selectedAppointent);
+  console.log('====================================');
   return (
     <>
       <Modal
-        title={selectedAppointent?._id ? "Cập nhật lịch khám" : "Đặt lịch khám"}
+        title={selectedAppointent?._id ? `Cập nhật lịch khám: ${formatedTime(selectedAppointent.time)} - ${formatedDate(selectedAppointent.date)} - ${getSpecialtyName(selectedAppointent.specialty)}`: "Đặt lịch khám"}
         open={visible}
         onOk={handleAppointmentOk}
         onCancel={onCancelModal}
@@ -212,21 +216,23 @@ export default function AddAppointmentPatient({
             time: "08:00",
           }}
         >
-          <Form.Item
-            name="patientId"
-            label="Bệnh nhân"
-            rules={[{ required: true, message: "Vui lòng chọn bệnh nhân!" }]}
-            fieldId="patientId"
-          >
-            <DebounceSelect
-              disabled={selectedAppointent?.patientId}
-              selectId="patientId"
-              placeholder="Chọn bệnh nhân"
-              fetchOptions={fetchPatientList}
-              initValue={selectedAppointent?.patientId?._id || patient?._id}
-              style={{ width: "100%" }}
-            />
-          </Form.Item>
+          {!isPatient && (
+            <Form.Item
+              name="patientId"
+              label="Bệnh nhân"
+              rules={[{ required: true, message: "Vui lòng chọn bệnh nhân!" }]}
+              fieldId="patientId"
+            >
+              <DebounceSelect
+                disabled={selectedAppointent?.patientId}
+                selectId="patientId"
+                placeholder="Chọn bệnh nhân"
+                fetchOptions={fetchPatientList}
+                initValue={selectedAppointent?.patientId?._id || patient?._id}
+                style={{ width: "100%" }}
+              />
+            </Form.Item>
+          )}
           <Form.Item
             label="Chọn chuyên khoa"
             name="specialty"

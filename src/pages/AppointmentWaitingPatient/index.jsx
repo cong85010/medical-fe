@@ -12,12 +12,18 @@ import {
   Flex,
   Typography,
   DatePicker,
+  Divider,
 } from "antd";
 import dayjs from "dayjs";
 import Title from "src/components/Title";
-import { ArrowRightOutlined, ArrowUpOutlined } from "@ant-design/icons";
+import {
+  ArrowRightOutlined,
+  ArrowUpOutlined,
+  CalendarOutlined,
+  RightCircleOutlined,
+} from "@ant-design/icons";
 import { getListAppointment } from "src/api/appointment";
-import { FORMAT_DATE, getToday } from "src/utils";
+import { FORMAT_DATE, formatedDate, formatedTime, getToday } from "src/utils";
 import UserItem from "src/components/UserItem";
 
 const AppointmentWaitingPatient = () => {
@@ -62,7 +68,7 @@ const AppointmentWaitingPatient = () => {
       ellipsis: true,
       key: "date",
       width: 120,
-      render: (date) => dayjs(date).format(FORMAT_DATE),
+      render: (date) => formatedDate(date),
     },
     {
       title: "Giờ khám",
@@ -70,7 +76,7 @@ const AppointmentWaitingPatient = () => {
       dataIndex: "time",
       width: 100,
       key: "time",
-      render: (time) => dayjs(time, "HH:mm").format("HH:mm"),
+      render: (time) => formatedTime(time),
     },
     {
       ellipsis: true,
@@ -146,10 +152,24 @@ const AppointmentWaitingPatient = () => {
             justifyContent: "space-between",
           }}
           right={
-            <Flex align="center">
-              <Typography.Text strong style={{ marginRight: 10 }}>
-                Chọn ngày:
-              </Typography.Text>
+            <Flex align="center" gap={10}>
+              <Typography.Title level={5} style={{ margin: 0 }}>
+                Ngày: {filterDate.format(FORMAT_DATE)}
+              </Typography.Title>
+              <Divider type="vertical" />
+              <Button
+                type="primary"
+                icon={<CalendarOutlined />}
+                onClick={() => setFilterDate(dayjs())}
+              >
+                Hôm nay
+              </Button>
+              <Button
+                icon={<RightCircleOutlined />}
+                onClick={() => setFilterDate(dayjs(filterDate).add(1, "day"))}
+              >
+                Ngày mai
+              </Button>
               <DatePicker
                 value={filterDate}
                 format={FORMAT_DATE}

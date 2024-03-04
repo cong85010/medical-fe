@@ -38,6 +38,7 @@ const ViewScheduleModal = ({
   onEdit,
   onCancel,
   reload: reloadSchedule,
+  isPage,
 }) => {
   const [appointments, setAppointments] = useState([]);
   const [reload, setReload] = useState(false);
@@ -70,15 +71,38 @@ const ViewScheduleModal = ({
 
     return record.status === STATUS_BOOKING.booked &&
       isTimeBeforeCurrentByHours(record.date, record.time, TIME_CAN_EDIT) ? (
-      <Tooltip title="Chỉnh sửa lịch khám">
-        <Button
-          type="default"
-          size="small"
-          onClick={() => handleEditAppointment(record)}
+      <>
+        <Tooltip title="Chỉnh sửa lịch khám">
+          <Button
+            type="default"
+            size="small"
+            onClick={() => handleEditAppointment(record)}
+          >
+            <EditOutlined />
+          </Button>
+        </Tooltip>
+        <Popconfirm
+          icon={<DeleteOutlined style={{ color: "red" }} />}
+          title="Hủy lịch khám bệnh"
+          description={
+            <>
+              <Typography.Text>Xác nhận hủy lịch ngày: </Typography.Text>{" "}
+              <strong>
+                {record.date} - {record.time}?
+              </strong>
+            </>
+          }
+          onConfirm={() => handleCancelAppmt(record)}
+          okText="Xác nhận"
+          cancelText="Không"
         >
-          <EditOutlined />
-        </Button>
-      </Tooltip>
+          <Tooltip title="Hủy lịch khám">
+            <Button type="default" danger size="small">
+              <DeleteOutlined />
+            </Button>
+          </Tooltip>
+        </Popconfirm>
+      </>
     ) : null;
   };
 
@@ -140,34 +164,7 @@ const ViewScheduleModal = ({
       key: "action",
       align: "center",
       render: (text, record) => {
-        return (
-          <Flex gap={10}>
-            {hasPermissionEdit(record)}
-            {record.status === STATUS_BOOKING.booked && (
-              <Popconfirm
-                icon={<DeleteOutlined style={{ color: "red" }} />}
-                title="Hủy lịch khám bệnh"
-                description={
-                  <>
-                    <Typography.Text>Xác nhận hủy lịch ngày: </Typography.Text>{" "}
-                    <strong>
-                      {record.date} - {record.time}?
-                    </strong>
-                  </>
-                }
-                onConfirm={() => handleCancelAppmt(record)}
-                okText="Xác nhận"
-                cancelText="Không"
-              >
-                <Tooltip title="Hủy lịch khám">
-                  <Button type="default" danger size="small">
-                    <DeleteOutlined />
-                  </Button>
-                </Tooltip>
-              </Popconfirm>
-            )}
-          </Flex>
-        );
+        return <Flex gap={10}>{hasPermissionEdit(record)}</Flex>;
       },
     },
   ];
@@ -185,6 +182,18 @@ const ViewScheduleModal = ({
     }
   }, [selectedPatient?._id, visible, reload, reloadSchedule]);
 
+  const table = (
+    <Table
+      scroll={{ y: 300 }}
+      rowKey="_id"
+      columns={columns}
+      dataSource={appointments}
+      style={{ marginTop: "20px" }}
+    />
+  );
+  if (isPage) {
+    return table;
+  }
   return (
     <Modal
       width={900}
@@ -195,13 +204,7 @@ const ViewScheduleModal = ({
       onCancel={onCancel}
       footer={null}
     >
-      <Table
-        scroll={{ y: 300 }}
-        rowKey="_id"
-        columns={columns}
-        dataSource={appointments}
-        style={{ marginTop: "20px" }}
-      />
+      {table}
     </Modal>
   );
 };

@@ -23,7 +23,7 @@ import {
   RightCircleOutlined,
 } from "@ant-design/icons";
 import { getListAppointment } from "src/api/appointment";
-import { FORMAT_DATE, getToday } from "src/utils";
+import { FORMAT_DATE, formatedDate, formatedTime, getToday } from "src/utils";
 import UserItem from "src/components/UserItem";
 
 const AppointmentPatientPage = () => {
@@ -53,7 +53,7 @@ const AppointmentPatientPage = () => {
       ellipsis: true,
       key: "date",
       width: 80,
-      render: (date) => dayjs(date).format(FORMAT_DATE),
+      render: (date) => formatedDate(date),
     },
     {
       title: "Giờ khám",
@@ -61,7 +61,7 @@ const AppointmentPatientPage = () => {
       dataIndex: "time",
       width: 80,
       key: "time",
-      render: (time) => dayjs(time, "HH:mm").format("HH:mm"),
+      render: (time) => formatedTime(time),
     },
     {
       width: 150,

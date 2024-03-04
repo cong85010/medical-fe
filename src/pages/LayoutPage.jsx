@@ -169,6 +169,12 @@ const LayoutPage = () => {
           label: "Bệnh án",
           link: "/medical",
         });
+        menuItems.push({
+          key: "appointment",
+          icon: <CalendarOutlined />,
+          label: "Lịch hẹn",
+          link: "/appointment",
+        });
         break;
       }
       default: {

@@ -18,6 +18,7 @@ import PatientPage from "./pages/Patient/PatientPage";
 import AppointmentPatientPage from "./pages/AppointmentPatient";
 import ProfilePage from "./pages/Profile/ProfilePage";
 import AppointmentWaitingPatient from "./pages/AppointmentWaitingPatient";
+import AppointmentsPage from "./pages/Appointments";
 
 const PrivateRoute = ({ element, requiredPermission = [] }) => {
   const userType = useSelector((state) => state.auth?.user?.userType);
@@ -118,6 +119,15 @@ function App() {
             element={
               <PrivateRoute
                 element={<MedicalRecord />}
+                requiredPermission={[TYPE_EMPLOYEE.user]}
+              />
+            }
+          />
+          <Route
+            path="/appointment"
+            element={
+              <PrivateRoute
+                element={<AppointmentsPage />}
                 requiredPermission={[TYPE_EMPLOYEE.user]}
               />
             }
