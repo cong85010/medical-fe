@@ -73,14 +73,19 @@ export default function UsersPage() {
       title: "Email",
       dataIndex: "email",
       key: "email",
+      width: 200,
+      ellipsis: true,
     },
     {
       title: "Họ tên",
       dataIndex: "fullName",
+      width: 170,
       key: "fullName",
     },
     {
       title: "Ngày sinh",
+      width: 170,
+      ellipsis: true,
       dataIndex: "birthday",
       key: "birthday",
       render: (birthday) => (
@@ -91,6 +96,8 @@ export default function UsersPage() {
       ),
     },
     {
+      width: 90,
+      ellipsis: true,
       title: "Giới tính",
       dataIndex: "gender",
       key: "gender",
@@ -99,12 +106,20 @@ export default function UsersPage() {
       },
     },
     {
+      width: 120,
       title: "Điện thoại",
       dataIndex: "phone",
       key: "phone",
     },
+    {
+      width: 150,
+      title: "Địa chỉ",
+      dataIndex: "address",
+      key: "address",
+    },
 
     {
+      width: 180,
       title: "Chức vụ",
       key: "userType",
       filters: [
@@ -136,6 +151,7 @@ export default function UsersPage() {
       ),
     },
     {
+      width: 150,
       title: "Trạng thái",
       dataIndex: "activeStatus",
       key: "activeStatus",
@@ -160,6 +176,9 @@ export default function UsersPage() {
     },
     {
       title: "Hành động",
+      fixed: 'right',
+      width: 130,
+      ellipsis: true,
       key: "action",
       render: (_, record) => (
         <Space size="middle">
@@ -316,7 +335,7 @@ export default function UsersPage() {
           icon={<PlusCircleFilled />}
           onClick={() => setIsVisible(true)}
         >
-          Thêm người dùng
+          Thêm nhân viên
         </Button>
       </Flex>
       <Table
@@ -324,10 +343,11 @@ export default function UsersPage() {
         dataSource={users}
         pagination={pagination}
         onChange={handleTableChange}
+        scroll={{ x: 1300, y: 500 }}
       />
       <Modal
         open={isVisible}
-        title="Thêm người dùng"
+        title="Thêm nhân viên"
         onOk={handleOk}
         okText={selectedUser ? "Cập nhật" : "Thêm"}
         cancelText="Hủy"

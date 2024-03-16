@@ -11,32 +11,44 @@ import {
   Modal,
 } from "antd";
 import ExaminationFormModal from "src/components/ExaminationFormModal";
+import { useParams } from "react-router-dom";
+import {
+  FORMAT_TIME,
+  STATUS_BOOKING_COLOR,
+  STATUS_BOOKING_STR,
+  TIME_PHYSICAL_EXAM,
+  formatedTime,
+  getSpecialtyName,
+} from "src/utils";
+import dayjs from "dayjs";
+import { getAppointment, getListAppointment } from "src/api/appointment";
 
 const { Option } = Select;
 
-const ExaminationPage = () => {
-  const [patients, setPatients] = useState([]);
+const ExaminationDetailPage = () => {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [examinationHistory, setExaminationHistory] = useState([]);
   const [diagnosis, setDiagnosis] = useState("");
   const [prescription, setPrescription] = useState("");
   const [isExaminationModalVisible, setIsExaminationModalVisible] =
     useState(false);
+  const params = useParams();
+  const { id: appointmentId } = params;
 
+  console.log(appointmentId);
   // Simulating fetching patients from an API
   useEffect(() => {
     const fetchPatients = async () => {
       try {
-        const response = await fetch("https://api.example.com/patients");
-        const data = await response.json();
-        setPatients(data);
+        const { appointment } = await getAppointment(appointmentId);
+        setSelectedPatient(appointment);
       } catch (error) {
         console.error("Error fetching patients:", error);
       }
     };
 
     fetchPatients();
-  }, []);
+  }, [appointmentId]);
 
   useEffect(() => {
     // Simulating fetching examination history for the selected patient
@@ -103,24 +115,46 @@ const ExaminationPage = () => {
     // Handle prescribing logic here
   };
 
+  console.log(selectedPatient);
   return (
     <div>
       <h1>Khám bệnh</h1>
-      <Table dataSource={patients} columns={columns} />
       <div>
-        <h2>Patient Information</h2>
-        <Descriptions bordered>
-          <Descriptions.Item label="Patient ID">
-            {selectedPatient?.id}
+        <h2>Thông tin bệnh nhân</h2>
+        <Descriptions column={2} bordered>
+          <Descriptions.Item label="Bệnh nhân">
+            {selectedPatient?.patientId?.fullName}
           </Descriptions.Item>
-          <Descriptions.Item label="Name">
-            {selectedPatient?.name}
+          <Descriptions.Item label="Điện thoại">
+            {selectedPatient?.patientId?.phone}
           </Descriptions.Item>
-          {/* Add more patient details as needed */}
+          <Descriptions.Item label="Ngày khám">
+            {selectedPatient?.date}
+          </Descriptions.Item>
+          <Descriptions.Item
+            label="Thời gian khám"
+            style={{ fontWeight: "bold" }}
+          >
+            {selectedPatient?.time} ~{" "}
+            {formatedTime(
+              dayjs(selectedPatient?.time, FORMAT_TIME).add(
+                TIME_PHYSICAL_EXAM,
+                "minute"
+              )
+            )}
+          </Descriptions.Item>
+          <Descriptions.Item label="Chuyên khoa">
+            {getSpecialtyName(selectedPatient?.specialty)}
+          </Descriptions.Item>
+          <Descriptions.Item label="Trạng thái">
+            <Tag color={STATUS_BOOKING_COLOR[selectedPatient?.status]}>
+              {STATUS_BOOKING_STR[selectedPatient?.status]}
+            </Tag>
+          </Descriptions.Item>
         </Descriptions>
       </div>
       <div>
-        <h2>Examination History for {selectedPatient?.name}</h2>
+        <h2>Lịch sử khám bệnh</h2>
         <Table
           dataSource={examinationHistory}
           columns={[
@@ -149,4 +183,4 @@ const ExaminationPage = () => {
   );
 };
 
-export default ExaminationPage;
+export default ExaminationDetailPage;

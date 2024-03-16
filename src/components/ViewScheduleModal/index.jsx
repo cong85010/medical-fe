@@ -61,7 +61,7 @@ const ViewScheduleModal = ({
       });
     } catch (error) {
       notification.error({
-        message: "Không thành công",
+        message: "Cập nhật không thành công",
       });
     }
   };
@@ -111,6 +111,7 @@ const ViewScheduleModal = ({
       title: "Ngày đặt",
       dataIndex: "createdAt",
       key: "createdAt",
+      width: 200,
       render: (createdAt) => {
         return dayjs(createdAt).format("HH:mm:ss DD/MM/YYYY");
       },
@@ -118,15 +119,17 @@ const ViewScheduleModal = ({
     {
       title: "Ngày khám",
       dataIndex: "date",
+      width: 120,
       key: "date",
       render: (text) => {
         return dayjs(text, "DD/MM/YYYY").format("DD/MM/YYYY");
       },
     },
     {
-      width: 80,
+      width: 120,
       title: "Giờ dự kiến",
       dataIndex: "time",
+      align: "center",
       key: "time",
       render: (text) => {
         return dayjs(text, "HH:mm").format("HH:mm");
@@ -161,8 +164,8 @@ const ViewScheduleModal = ({
     },
     {
       title: "Hành động",
+      width: 150,
       key: "action",
-      align: "center",
       render: (text, record) => {
         return <Flex gap={10}>{hasPermissionEdit(record)}</Flex>;
       },

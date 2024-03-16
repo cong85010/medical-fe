@@ -36,10 +36,9 @@ const ProfilePage = () => {
   const user = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
   useEffect(() => {
-    console.log(user);
     if (user?._id) {
       form.setFieldsValue({
-        gender: 'male',
+        gender: "male",
         ...user,
         birthday: dayjs(user.birthday),
         userTypeStr: TYPE_EMPLOYEE_STR[user.userType].toUpperCase(),
@@ -198,7 +197,7 @@ const ProfilePage = () => {
             name="phone"
             rules={[{ required: true, message: "Vui lòng nhập số điện thoại" }]}
           >
-            <Input disabled />
+            <Input disabled={user.userType !== TYPE_EMPLOYEE.admin} />
           </Form.Item>
 
           <Form.Item label="Chức vụ" name="userTypeStr">

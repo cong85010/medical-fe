@@ -49,15 +49,14 @@ const AddMeetingRoomModal = ({
   };
 
   useEffect(() => {
-    console.log("====================================");
-    console.log(selectedMetting);
-    console.log("====================================");
-    form.setFieldsValue({
-      ...selectedMetting,
-      timeStart: dayjs(selectedMetting?.timeStart, formatTime),
-      timeEnd: dayjs(selectedMetting?.timeEnd, formatTime),
-    });
-  }, [form, selectedMetting]);
+    if (visible) {
+      form.setFieldsValue({
+        ...selectedMetting,
+        timeStart: dayjs(selectedMetting?.timeStart, formatTime),
+        timeEnd: dayjs(selectedMetting?.timeEnd, formatTime),
+      });
+    }
+  }, [form, visible, selectedMetting]);
 
   if (!visible) return <></>;
 

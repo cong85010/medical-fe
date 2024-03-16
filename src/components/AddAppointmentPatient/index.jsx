@@ -102,6 +102,7 @@ export default function AddAppointmentPatient({
         if (selectedAppointent?._id) {
           const result = await updateAppointment({
             ...selectedAppointent,
+            patientId: isPatient ? patient._id : values.patientId,
             doctorId: values.doctor._id,
             specialty: values.specialty,
             time: selectedHour,
@@ -188,9 +189,6 @@ export default function AddAppointmentPatient({
     setRefreshData(!refreshData);
   };
 
-  console.log('====================================');
-  console.log(selectedAppointent);
-  console.log('====================================');
   return (
     <>
       <Modal

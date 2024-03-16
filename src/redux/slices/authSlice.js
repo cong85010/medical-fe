@@ -84,15 +84,15 @@ const authSlice = createSlice({
       })
       .addCase(registerAuth.rejected, (state, action) => {
         state.loading = false;
-        notification.error({
-          message: action.payload,
-        });
+      })
+      .addCase(reLoginAuth.rejected, (state, action) => {
+        state.loading = false;
+        state.isAuthenticated = false;
+        state.user = {};
+        localStorage.setItem("token", "");
       })
       .addCase(loginAuth.rejected, (state, action) => {
         state.loading = false;
-        notification.error({
-          message: action.payload,
-        });
       });
   },
 });

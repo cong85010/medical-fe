@@ -29,6 +29,12 @@ export const getListAppointment = async (params) => {
   return response;
 };
 
+export const getAppointment = async (userId) => {
+  const response = await instance.get(`${baseURL}/${userId}`);
+
+  return response;
+};
+
 export const getListTimeByDate = async (date, doctorId) => {
   const response = await instance.get(
     `${baseURL}/list-time?date=${date}&doctorId=${doctorId}`

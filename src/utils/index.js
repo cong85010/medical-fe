@@ -153,6 +153,7 @@ export function isTimeBeforeCurrentByHours(date, time, hours) {
 }
 
 export const TIME_CAN_EDIT = 2;
+export const TIME_PHYSICAL_EXAM = 30;
 
 export const FORMAT_DATE = "DD/MM/YYYY";
 export const FORMAT_TIME = "HH:mm";
@@ -161,8 +162,8 @@ export const getToday = () => {
   return dayjs().format(FORMAT_DATE);
 };
 
-export const formatedDate = (date) => {
-  return dayjs(date, FORMAT_DATE).format(FORMAT_DATE);
+export const formatedDate = (date, format) => {
+  return dayjs(date, format || FORMAT_DATE).format(FORMAT_DATE);
 };
 
 export const formatedTime = (date) => {

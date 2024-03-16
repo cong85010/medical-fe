@@ -1,6 +1,13 @@
+import {
+  PlusCircleFilled,
+  ReloadOutlined,
+  SearchOutlined,
+} from "@ant-design/icons";
+import { Button, Flex, Input, Tooltip } from "antd";
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import AddAppointmentPatient from "src/components/AddAppointmentPatient";
+import Title from "src/components/Title";
 import ViewScheduleModal from "src/components/ViewScheduleModal";
 
 export default function AppointmentsPage() {
@@ -40,6 +47,16 @@ export default function AppointmentsPage() {
 
   return (
     <div>
+      <Title title="Lịch hẹn" />
+      <Flex justify="end" style={{ marginBottom: 10 }}>
+        <Button
+          type="primary"
+          icon={<PlusCircleFilled />}
+          onClick={() => setAddVisiableAppointment(true)}
+        >
+          Hẹn lịch khám
+        </Button>
+      </Flex>
       <AddAppointmentPatient
         visible={addVisiableAppointment}
         onCancel={handleAddAppointmentCancel}

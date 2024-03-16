@@ -4,22 +4,25 @@ import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import LayoutPage from "./pages/LayoutPage";
 import LoginPage from "./pages/Auth/LoginPage";
 import RegisterPage from "./pages/Auth/RegisterPage";
-import UsersPage from "./pages/Users";
-import CalendarPage from "./pages/Calendar";
-import ExaminationPage from "./pages/Examination";
-import MedicalRecord from "./pages/MedicalRecord";
+import UsersPage from "./pages/Users_AD";
+import CalendarPage from "./pages/Calendar_BS";
+import ExaminationPage from "./pages/Examination_BS";
+import MedicalRecord from "./pages/MedicalRecord_BN";
 import { TYPE_EMPLOYEE } from "./utils";
 import { useDispatch, useSelector } from "react-redux";
 import UnauthorizedPage from "./pages/UnauthorizedPage";
 import { logoutAuth, reLoginAuth } from "./redux/slices/authSlice";
 import { Spin, notification } from "antd";
-import ProfileMedicalPage from "./pages/ProfileMedical";
-import PatientPage from "./pages/Patient/PatientPage";
-import AppointmentPatientPage from "./pages/AppointmentPatient";
-import ProfilePage from "./pages/Profile/ProfilePage";
-import AppointmentWaitingPatient from "./pages/AppointmentWaitingPatient";
-import AppointmentsPage from "./pages/Appointments";
+import ProfileMedicalPage from "./pages/ProfileMedical_HC";
+import PatientPage from "./pages/Patient_BN/PatientPage";
+import AppointmentPatientPage from "./pages/AppointmentPatient_HC";
+import ProfilePage from "./pages/Profile_ALL/ProfilePage";
+import AppointmentsPage from "./pages/Appointments_BN";
+import ExaminationDetailPage from "./pages/ExaminationDetail_BS";
+import dayjs from 'dayjs'
+import customParseFormat from 'dayjs/plugin/customParseFormat'
 
+dayjs.extend(customParseFormat)
 const PrivateRoute = ({ element, requiredPermission = [] }) => {
   const userType = useSelector((state) => state.auth?.user?.userType);
   const loading = useSelector((state) => state.auth?.loading);
@@ -115,6 +118,15 @@ function App() {
             }
           />
           <Route
+            path="/examination/:id"
+            element={
+              <PrivateRoute
+                element={<ExaminationDetailPage />}
+                requiredPermission={[TYPE_EMPLOYEE.doctor]}
+              />
+            }
+          />
+          <Route
             path="/medical"
             element={
               <PrivateRoute
@@ -155,15 +167,6 @@ function App() {
             element={
               <PrivateRoute
                 element={<AppointmentPatientPage />}
-                requiredPermission={[TYPE_EMPLOYEE.administrative]}
-              />
-            }
-          />
-          <Route
-            path="/appointments-waiting"
-            element={
-              <PrivateRoute
-                element={<AppointmentWaitingPatient />}
                 requiredPermission={[TYPE_EMPLOYEE.administrative]}
               />
             }

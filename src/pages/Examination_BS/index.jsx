@@ -20,34 +20,33 @@ import {
   ArrowRightOutlined,
   ArrowUpOutlined,
   CalendarOutlined,
+  CaretRightOutlined,
+  PlayCircleFilled,
+  PlayCircleOutlined,
   RightCircleOutlined,
+  UserSwitchOutlined,
 } from "@ant-design/icons";
 import { getListAppointment } from "src/api/appointment";
-import { FORMAT_DATE, formatedDate, formatedTime, getToday } from "src/utils";
+import {
+  FORMAT_DATE,
+  STATUS_BOOKING,
+  formatedDate,
+  formatedTime,
+  getToday,
+} from "src/utils";
 import UserItem from "src/components/UserItem";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 
-const AppointmentWaitingPatient = () => {
+const ExaminationPage = () => {
   const [appointments, setAppointments] = useState([]);
   const [pendingAppointments, setPendingAppointments] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [filterDate, setFilterDate] = useState(dayjs());
   const [listAppointment, setListAppointment] = useState([]);
   const [initLoading, setInitLoading] = useState(true);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const initData = async () => {
-      // Replace this with the actual API call to fetch appointments
-      const { appointments } = await getListAppointment({
-        date: filterDate.format(FORMAT_DATE),
-        status: "waiting",
-      });
-      setInitLoading(false);
-      setPendingAppointments(appointments);
-    };
-    initData();
-  }, [filterDate]);
-
+  const user = useSelector((state) => state.auth.user);
+  const navigate = useNavigate();
   const columns = [
     {
       title: "STT",
@@ -55,7 +54,7 @@ const AppointmentWaitingPatient = () => {
       key: "index",
       align: "center",
       ellipsis: true,
-      width: 80,
+      width: 100,
       render: (text, record, index) => (
         <Typography.Text strong style={{ fontSize: 17 }}>
           {index + 1}
@@ -67,7 +66,7 @@ const AppointmentWaitingPatient = () => {
       dataIndex: "date",
       ellipsis: true,
       key: "date",
-      width: 120,
+      width: 150,
       render: (date) => formatedDate(date),
     },
     {
@@ -83,34 +82,74 @@ const AppointmentWaitingPatient = () => {
       title: "Bệnh nhân",
       dataIndex: "patientId",
       key: "patientId",
-      render: (patientId) => {
-        return <UserItem user={patientId} />;
+      render: (patientId, record) => {
+        return patientId.fullName;
       },
     },
     {
-      ellipsis: true,
-      title: "Bác sĩ",
-      dataIndex: "doctorId",
-      key: "doctorId",
-      render: (doctorId) => {
-        return <UserItem user={doctorId} />;
+      width: 150,
+      title: "Ngày sinh",
+      dataIndex: "birthday",
+      key: "birthday",
+      render: (birthday, record) => (
+        <span>
+          {dayjs(record?.patientId?.birthday).format("DD/MM/YYYY")}-{" "}
+          {dayjs().diff(record?.patientId?.birthday, "year")} tuổi
+        </span>
+      ),
+    },
+    {
+      title: "Số điện thoại",
+      dataIndex: "phone",
+      key: "phone",
+      render: (_, record) => {
+        return record?.patientId.phone;
       },
     },
     {
-      title: "Thao tác",
+      title: "Địa chỉ",
+      dataIndex: "address",
+      key: "address",
+      render: (_, record) => {
+        return record?.patientId.address;
+      },
+    },
+    {
+      title: "Hành động",
       key: "action",
-      render: (text, record) => (
+      align: "center",
+      width: 150,
+      render: (_, record) => (
         <Space size="middle">
-          <Button onClick={() => handleApprove(record.key)}>Phê duyệt</Button>
-          <Button onClick={() => handleReject(record.key)}>Từ chối</Button>
+          <Button
+            icon={<CaretRightOutlined />}
+            onClick={() => navigate("/examination/" + record._id)}
+          >
+            Khám
+          </Button>
         </Space>
       ),
     },
   ];
 
-  const showModal = () => {
-    setModalVisible(true);
-  };
+  useEffect(() => {
+    const initData = async () => {
+      setInitLoading(true);
+      // Replace this with the actual API call to fetch appointments
+      const { appointments } = await getListAppointment({
+        date: formatedDate(filterDate),
+        doctorId: user?._id,
+        status: STATUS_BOOKING.booked,
+        sort: "time=1",
+      });
+      setInitLoading(false);
+      setListAppointment(appointments);
+    };
+
+    if (user._id) {
+      initData();
+    }
+  }, [filterDate, user]);
 
   const handleOk = () => {
     setModalVisible(false);
@@ -120,34 +159,11 @@ const AppointmentWaitingPatient = () => {
     setModalVisible(false);
   };
 
-  const handleDelete = (key) => {
-    setAppointments(appointments.filter((item) => item.key !== key));
-  };
-
-  const handleApprove = (key) => {
-    const selectedAppointment = pendingAppointments.find(
-      (item) => item.key === key
-    );
-    setAppointments([
-      ...appointments,
-      { key: Date.now(), ...selectedAppointment },
-    ]);
-    setPendingAppointments(
-      pendingAppointments.filter((item) => item.key !== key)
-    );
-  };
-
-  const handleReject = (key) => {
-    setPendingAppointments(
-      pendingAppointments.filter((item) => item.key !== key)
-    );
-  };
-
   return (
     <div>
-      <Card style={{ flex: "1 1" }}>
+      <Card>
         <Title
-          title="Danh sách chờ phê duyệt"
+          title="Danh sách thứ tự khám"
           styleContainer={{
             justifyContent: "space-between",
           }}
@@ -178,14 +194,14 @@ const AppointmentWaitingPatient = () => {
             </Flex>
           }
         />
-
         <Table
-          dataSource={pendingAppointments}
+          className="demo-loadmore-list"
+          loading={initLoading}
           columns={columns}
-          rowKey="key"
+          dataSource={listAppointment}
+          scroll={{ x: 800, y: 500 }}
         />
       </Card>
-
       <Modal
         title="Thông báo"
         open={modalVisible}
@@ -198,4 +214,4 @@ const AppointmentWaitingPatient = () => {
   );
 };
 
-export default AppointmentWaitingPatient;
+export default ExaminationPage;

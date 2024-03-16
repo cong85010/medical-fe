@@ -132,6 +132,7 @@ const MedicalRecord = () => {
         const result = await getUsers({
           userType: "user",
           searchKey: keyword,
+          sort: { createdAt: 1 },
           limit: pagination.pageSize,
           skip: pagination.pageSize * (pagination.current - 1),
         });
