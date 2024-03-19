@@ -1,3 +1,4 @@
+import { notification } from "antd";
 import dayjs from "dayjs";
 
 export const TYPE_EMPLOYEE = {
@@ -17,24 +18,30 @@ export const TYPE_EMPLOYEE_STR = {
 };
 
 export const STATUS_BOOKING = {
+  finished: "finished",
   booked: "booked",
+  waiting: "waiting",
+  examining: "examining",
   rejected: "rejected",
   cancelled: "cancelled",
-  actived: "actived",
 };
 
 export const STATUS_BOOKING_STR = {
+  finished: "Đã khám",
   booked: "Đã đặt",
+  waiting: "Chờ khám",
+  examining: "Đang khám",
   rejected: "Từ chối",
   cancelled: "Đã hủy",
-  actived: "Đã xử lý",
 };
 
 export const STATUS_BOOKING_COLOR = {
+  finished: 'green',
   booked: "blue",
+  examining: "cyan",
+  waiting: "orange",
   rejected: "red",
   cancelled: "red",
-  actived: "green",
 };
 
 export const colorOfType = {
@@ -59,13 +66,20 @@ export const getBase64 = (img, callback) => {
 };
 
 export const beforeUpload = (file) => {
-  const isJpgOrPng = file.type === "image/jpeg" || file.type === "image/png";
+  const isJpgOrPng =
+    file.type === "image/jpeg" ||
+    file.type === "image/png" ||
+    file.type === "image/jpg";
   if (!isJpgOrPng) {
-    message.error("You can only upload JPG/PNG file!");
+    notification.error({
+      message: "Chỉ hỗ trợ định dạng ảnh JPG, JPEG, PNG",
+    });
   }
   const isLt2M = file.size / 1024 / 1024 < 2;
   if (!isLt2M) {
-    message.error("Image must smaller than 2MB!");
+    notification.error({
+      message: "Kích thước ảnh phải nhỏ hơn 2MB",
+    });
   }
   return isJpgOrPng && isLt2M;
 };
@@ -156,13 +170,14 @@ export const TIME_CAN_EDIT = 2;
 export const TIME_PHYSICAL_EXAM = 30;
 
 export const FORMAT_DATE = "DD/MM/YYYY";
+export const FORMAT_DATE_MONGO = "YYYY-MM-DD";
 export const FORMAT_TIME = "HH:mm";
 
 export const getToday = () => {
   return dayjs().format(FORMAT_DATE);
 };
 
-export const formatedDate = (date, format) => {
+export const formatedDate = (date, format = null) => {
   return dayjs(date, format || FORMAT_DATE).format(FORMAT_DATE);
 };
 

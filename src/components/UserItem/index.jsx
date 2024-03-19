@@ -1,8 +1,9 @@
-import { Avatar, Card } from "antd";
+import { Avatar, Card, Space, Typography } from "antd";
 import CPhone from "../Phone";
+import { FORMAT_DATE_MONGO, birthdayAndAge, formatedDate } from "src/utils";
 const { Meta } = Card;
 
-const UserItem = ({ user, width = 200 }) => {
+const UserItem = ({ user, width = 200, showBirthDay = false }) => {
   const getAvatarContent = () => {
     if (user.photo) {
       return <Avatar src={user.avatarUrl} />;
@@ -10,6 +11,7 @@ const UserItem = ({ user, width = 200 }) => {
     return null;
   };
 
+  console.log(user);
   return (
     <Card
       style={{ width: width }}
@@ -22,7 +24,16 @@ const UserItem = ({ user, width = 200 }) => {
       <Meta
         avatar={getAvatarContent()}
         title={user.fullName}
-        description={<CPhone phone={user.phone} />}
+        description={
+          <Space>
+            <CPhone phone={user.phone} />
+            {showBirthDay && (
+              <Typography.Text style={{ fontSize: 12 }}>
+                {formatedDate(user.birthday, FORMAT_DATE_MONGO)}
+              </Typography.Text>
+            )}
+          </Space>
+        }
       />
     </Card>
   );

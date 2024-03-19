@@ -9,19 +9,31 @@ import {
   Tag,
   Descriptions,
   Modal,
+  notification,
+  Flex,
+  Popconfirm,
 } from "antd";
 import ExaminationFormModal from "src/components/ExaminationFormModal";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   FORMAT_TIME,
+  STATUS_BOOKING,
   STATUS_BOOKING_COLOR,
   STATUS_BOOKING_STR,
   TIME_PHYSICAL_EXAM,
+  birthdayAndAge,
   formatedTime,
   getSpecialtyName,
 } from "src/utils";
 import dayjs from "dayjs";
-import { getAppointment, getListAppointment } from "src/api/appointment";
+import {
+  getAppointment,
+  getListAppointment,
+  updateStatusAppointment,
+} from "src/api/appointment";
+import Title from "src/components/Title";
+import AddPrescription from "src/components/AddPrescription";
+import { CheckCircleOutlined } from "@ant-design/icons";
 
 const { Option } = Select;
 
@@ -34,8 +46,8 @@ const ExaminationDetailPage = () => {
     useState(false);
   const params = useParams();
   const { id: appointmentId } = params;
+  const navigate = useNavigate();
 
-  console.log(appointmentId);
   // Simulating fetching patients from an API
   useEffect(() => {
     const fetchPatients = async () => {
@@ -54,20 +66,35 @@ const ExaminationDetailPage = () => {
     // Simulating fetching examination history for the selected patient
     const fetchExaminationHistory = async () => {
       if (selectedPatient) {
-        try {
-          const response = await fetch(
-            `https://api.example.com/examination-history/${selectedPatient.id}`
-          );
-          const data = await response.json();
-          setExaminationHistory(data);
-        } catch (error) {
-          console.error("Error fetching examination history:", error);
-        }
+        // try {
+        //   const response = await fetch(
+        //     `https://api.example.com/examination-history/${selectedPatient.id}`
+        //   );
+        //   const data = await response.json();
+        //   setExaminationHistory(data);
+        // } catch (error) {
+        //   console.error("Error fetching examination history:", error);
+        // }
       }
     };
 
     fetchExaminationHistory();
   }, [selectedPatient]);
+
+  const handleUpdateStatus = () => {
+    try {
+      updateStatusAppointment({
+        appointmentId,
+        status: STATUS_BOOKING.finished,
+      });
+      notification.success({
+        message: "Thành công",
+      });
+      navigate("/examination");
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const columns = [
     {
@@ -115,26 +142,43 @@ const ExaminationDetailPage = () => {
     // Handle prescribing logic here
   };
 
-  console.log(selectedPatient);
   return (
     <div>
-      <h1>Khám bệnh</h1>
+      <Title
+        title="Khám bệnh"
+        showBack
+        right={
+          <Flex justify="end" style={{ flex: "1 1" }}>
+            <Popconfirm
+              title="Xác nhận khám xong"
+              okText="Xác nhận"
+              cancelText="Hủy"
+              onConfirm={handleUpdateStatus}
+            >
+              <Button type="primary" icon={<CheckCircleOutlined />}>
+                Khám xong
+              </Button>
+            </Popconfirm>
+          </Flex>
+        }
+      />
       <div>
         <h2>Thông tin bệnh nhân</h2>
         <Descriptions column={2} bordered>
           <Descriptions.Item label="Bệnh nhân">
             {selectedPatient?.patientId?.fullName}
           </Descriptions.Item>
+          <Descriptions.Item label="Ngày sinh">
+            {birthdayAndAge(selectedPatient?.patientId?.birthday)}
+          </Descriptions.Item>
           <Descriptions.Item label="Điện thoại">
             {selectedPatient?.patientId?.phone}
-          </Descriptions.Item>
-          <Descriptions.Item label="Ngày khám">
-            {selectedPatient?.date}
           </Descriptions.Item>
           <Descriptions.Item
             label="Thời gian khám"
             style={{ fontWeight: "bold" }}
           >
+            {selectedPatient?.date} | {" "}
             {selectedPatient?.time} ~{" "}
             {formatedTime(
               dayjs(selectedPatient?.time, FORMAT_TIME).add(
@@ -154,7 +198,22 @@ const ExaminationDetailPage = () => {
         </Descriptions>
       </div>
       <div>
-        <h2>Lịch sử khám bệnh</h2>
+        <Title
+          title={"Lịch sử khám bệnh"}
+          justify="space-between"
+          styleContainer={{
+            marginTop: 20,
+          }}
+          right={
+            <Button
+              type="primary"
+              onClick={() => setIsExaminationModalVisible(true)}
+            >
+              Kết quả khám bệnh
+            </Button>
+          }
+        />
+
         <Table
           dataSource={examinationHistory}
           columns={[
@@ -171,12 +230,8 @@ const ExaminationDetailPage = () => {
           ]}
         />
       </div>
-      <Button type="primary" onClick={() => setIsExaminationModalVisible(true)}>
-        Kết quả khám bệnh
-      </Button>
-
       <ExaminationFormModal
-        isExaminationModalVisible={isExaminationModalVisible}
+        visible={isExaminationModalVisible}
         onCancel={handleCancel}
       />
     </div>

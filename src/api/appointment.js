@@ -20,7 +20,7 @@ export const updateStatusAppointment = async (body) => {
   return response;
 };
 
-export const getListAppointment = async (params) => {
+export const getListAppointment = async (params = {}) => {
   const paramsStr = Object.entries(params)
     .map((param) => `${param[0]}=${param[1]}`)
     .join("&");

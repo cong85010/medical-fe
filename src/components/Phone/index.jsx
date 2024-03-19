@@ -1,11 +1,11 @@
 import { PhoneOutlined } from "@ant-design/icons";
-import { Button } from "antd";
+import { Button, theme } from "antd";
 import React from "react";
 import { Link } from "react-router-dom";
 
 export default function CPhone({ phone }) {
   return (
-    <Link to={`tel:${phone}`} style={{ color: "#000" }}>
+    <Link to={`tel:${phone}`}>
       {phone} <PhoneOutlined />
     </Link>
   );

@@ -13,6 +13,9 @@ import {
   Typography,
   DatePicker,
   Divider,
+  Tag,
+  Alert,
+  notification,
 } from "antd";
 import dayjs from "dayjs";
 import Title from "src/components/Title";
@@ -26,10 +29,15 @@ import {
   RightCircleOutlined,
   UserSwitchOutlined,
 } from "@ant-design/icons";
-import { getListAppointment } from "src/api/appointment";
+import {
+  getListAppointment,
+  updateStatusAppointment,
+} from "src/api/appointment";
 import {
   FORMAT_DATE,
   STATUS_BOOKING,
+  STATUS_BOOKING_COLOR,
+  STATUS_BOOKING_STR,
   formatedDate,
   formatedTime,
   getToday,
@@ -39,22 +47,47 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
 const ExaminationPage = () => {
-  const [appointments, setAppointments] = useState([]);
-  const [pendingAppointments, setPendingAppointments] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [filterDate, setFilterDate] = useState(dayjs());
   const [listAppointment, setListAppointment] = useState([]);
+  const [patientExamaning, setPatientExamaning] = useState(null);
   const [initLoading, setInitLoading] = useState(true);
   const user = useSelector((state) => state.auth.user);
   const navigate = useNavigate();
+
+  const handleExamination = (record) => {
+    try {
+      if (patientExamaning) {
+        notification.error({
+          message: "Đang có bệnh nhân khám",
+        });
+        return;
+      }
+      updateStatusAppointment({
+        appointmentId: record._id,
+        status: STATUS_BOOKING.examining,
+      });
+      navigate(`/examination/${record._id}`);
+    } catch (error) {}
+  };
+
+  const handleGoToExamnation = () => {
+    try {
+      if (patientExamaning) {
+        navigate(`/examination/${patientExamaning._id}`);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const columns = [
     {
       title: "STT",
       dataIndex: "index",
       key: "index",
       align: "center",
-      ellipsis: true,
-      width: 100,
+      width: 70,
       render: (text, record, index) => (
         <Typography.Text strong style={{ fontSize: 17 }}>
           {index + 1}
@@ -79,6 +112,7 @@ const ExaminationPage = () => {
     },
     {
       ellipsis: true,
+      width: 200,
       title: "Bệnh nhân",
       dataIndex: "patientId",
       key: "patientId",
@@ -87,7 +121,7 @@ const ExaminationPage = () => {
       },
     },
     {
-      width: 150,
+      width: 170,
       title: "Ngày sinh",
       dataIndex: "birthday",
       key: "birthday",
@@ -100,6 +134,7 @@ const ExaminationPage = () => {
     },
     {
       title: "Số điện thoại",
+      width: 150,
       dataIndex: "phone",
       key: "phone",
       render: (_, record) => {
@@ -107,11 +142,15 @@ const ExaminationPage = () => {
       },
     },
     {
-      title: "Địa chỉ",
-      dataIndex: "address",
-      key: "address",
-      render: (_, record) => {
-        return record?.patientId.address;
+      width: 100,
+      title: "Trạng thái",
+      align: "center",
+      dataIndex: "status",
+      key: "status",
+      render: (key) => {
+        return (
+          <Tag color={STATUS_BOOKING_COLOR[key]}>{STATUS_BOOKING_STR[key]}</Tag>
+        );
       },
     },
     {
@@ -123,7 +162,7 @@ const ExaminationPage = () => {
         <Space size="middle">
           <Button
             icon={<CaretRightOutlined />}
-            onClick={() => navigate("/examination/" + record._id)}
+            onClick={() => handleExamination(record)}
           >
             Khám
           </Button>
@@ -139,7 +178,7 @@ const ExaminationPage = () => {
       const { appointments } = await getListAppointment({
         date: formatedDate(filterDate),
         doctorId: user?._id,
-        status: STATUS_BOOKING.booked,
+        status: STATUS_BOOKING.waiting,
         sort: "time=1",
       });
       setInitLoading(false);
@@ -151,6 +190,23 @@ const ExaminationPage = () => {
     }
   }, [filterDate, user]);
 
+  useEffect(() => {
+    const initData = async () => {
+      setInitLoading(true);
+      // Replace this with the actual API call to fetch appointments
+      const { appointments } = await getListAppointment({
+        doctorId: user?._id,
+        status: STATUS_BOOKING.examining,
+      });
+      setInitLoading(false);
+      setPatientExamaning(appointments.length > 0 ? appointments[0] : null);
+    };
+
+    if (user._id) {
+      initData();
+    }
+  }, [user]);
+
   const handleOk = () => {
     setModalVisible(false);
   };
@@ -161,47 +217,67 @@ const ExaminationPage = () => {
 
   return (
     <div>
-      <Card>
-        <Title
-          title="Danh sách thứ tự khám"
-          styleContainer={{
-            justifyContent: "space-between",
-          }}
-          right={
-            <Flex align="center" gap={10}>
-              <Typography.Title level={5} style={{ margin: 0 }}>
-                Ngày: {filterDate.format(FORMAT_DATE)}
-              </Typography.Title>
-              <Divider type="vertical" />
-              <Button
-                type="primary"
-                icon={<CalendarOutlined />}
-                onClick={() => setFilterDate(dayjs())}
-              >
-                Hôm nay
-              </Button>
-              <Button
-                icon={<RightCircleOutlined />}
-                onClick={() => setFilterDate(dayjs(filterDate).add(1, "day"))}
-              >
-                Ngày mai
-              </Button>
-              <DatePicker
-                value={filterDate}
-                format={FORMAT_DATE}
-                onChange={(date) => setFilterDate(date)}
-              />
-            </Flex>
-          }
-        />
-        <Table
-          className="demo-loadmore-list"
-          loading={initLoading}
-          columns={columns}
-          dataSource={listAppointment}
-          scroll={{ x: 800, y: 500 }}
-        />
-      </Card>
+      <Title
+        title="Danh sách thứ tự khám"
+        subTitle={
+          patientExamaning ? (
+            <Alert
+              showIcon
+              message={`BN: ${patientExamaning.patientId.fullName}`}
+              type="warning"
+              action={
+                <Button
+                  style={{ marginLeft: 10 }}
+                  type="link"
+                  size="small"
+                  onClick={handleGoToExamnation}
+                >
+                  Đang khám
+                </Button>
+              }
+            />
+          ) : (
+            ""
+          )
+        }
+        styleContainer={{
+          justifyContent: "space-between",
+        }}
+        right={
+          <Flex align="center" gap={10}>
+            <Typography.Title level={5} style={{ margin: 0 }}>
+              Ngày: {filterDate.format(FORMAT_DATE)}
+            </Typography.Title>
+            <Divider type="vertical" />
+            <Button
+              type="primary"
+              icon={<CalendarOutlined />}
+              onClick={() => setFilterDate(dayjs())}
+            >
+              Hôm nay
+            </Button>
+            <Button
+              icon={<RightCircleOutlined />}
+              onClick={() => setFilterDate(dayjs(filterDate).add(1, "day"))}
+            >
+              Ngày mai
+            </Button>
+            <DatePicker
+              value={filterDate}
+              format={FORMAT_DATE}
+              onChange={(date) => setFilterDate(date)}
+            />
+          </Flex>
+        }
+      />
+      <Table
+        rowKey={"_id"}
+        className="demo-loadmore-list"
+        loading={initLoading}
+        columns={columns}
+        dataSource={listAppointment}
+        scroll={{ x: 800, y: 500 }}
+      />
       <Modal
         title="Thông báo"
         open={modalVisible}

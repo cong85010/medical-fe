@@ -10,13 +10,16 @@ function DebounceSelectMemo({
   refreshData = false,
   selectId = null,
   initValue,
+  onChange,
   ...props
 }) {
   const [fetching, setFetching] = useState(false);
-  const [options, setOptions] = useState([{
-    value: initValue,
-    label: 'Đang tải'
-  }]);
+  const [options, setOptions] = useState([
+    {
+      value: initValue,
+      label: "Đang tải",
+    },
+  ]);
   const fetchRef = useRef(0);
 
   const debounceFetcher = useMemo(() => {
@@ -48,6 +51,15 @@ function DebounceSelectMemo({
     debounceFetcher();
   }, [refreshData]);
 
+  const handleChange = (value) => {
+    if (onChange) {
+      const selected = options.find((option) => option.value === value);
+      if (selected) {
+        onChange(selected);
+      }
+    }
+  };
+
   return (
     <Flex gap={10}>
       <Select
@@ -55,6 +67,7 @@ function DebounceSelectMemo({
         showSearch
         filterOption={false}
         loading={fetching}
+        onChange={handleChange}
         onSearch={debounceFetcher}
         notFoundContent={fetching ? <Spin size="small" /> : null}
         {...props}

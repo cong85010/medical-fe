@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -26,10 +26,14 @@ import {
   List,
   Popover,
   Dropdown,
+  Card,
+  Space,
 } from "antd";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { TYPE_EMPLOYEE } from "src/utils";
 import { useSelector } from "react-redux";
+import Title from "src/components/Title";
+import dayjs from "dayjs";
 const { Header, Sider, Content } = Layout;
 const data = [
   {
@@ -64,6 +68,36 @@ const items = [
     ),
   },
 ];
+
+const Clock = () => {
+  const [time, setTime] = useState(dayjs());
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setTime(dayjs());
+    }, 1000);
+
+    // Clear interval on component unmount
+    return () => clearInterval(intervalId);
+  }, []); // Empty dependency array ensures effect runs only on mount and unmount
+
+  return (
+    <Flex align="center" justify="center">
+      <Card styles={{ body: { padding: 10 } }}>
+        <Title
+          styleContainer={{ margin: 0 }}
+          justify="center"
+          title={
+            <Space>
+              <ClockCircleOutlined />
+              {time.format("HH:mm:ss")}
+            </Space>
+          }
+        />
+      </Card>
+    </Flex>
+  );
+};
 
 const LayoutPage = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -141,12 +175,6 @@ const LayoutPage = () => {
             icon: <GroupOutlined />,
             label: "Khám bệnh",
             link: "/appointments-patient",
-          },
-          {
-            key: "appointments-wating",
-            icon: <CheckCircleOutlined />,
-            label: "Phê duyệt",
-            link: "/appointments-waiting",
           },
         ];
 
@@ -251,6 +279,8 @@ const LayoutPage = () => {
                 height: 64,
               }}
             />
+            <Clock />
+
             <Flex style={{ marginRight: 20 }} align="center" gap={20}>
               <Popover
                 content={contentNoti}
@@ -260,7 +290,6 @@ const LayoutPage = () => {
               >
                 <Button type="text" icon={<BellOutlined size={2} />} />
               </Popover>
-
               <Button
                 type="text"
                 style={{ paddingLeft: 30 }}

@@ -184,8 +184,6 @@ const ProfileMedicalPage = () => {
     setSelectedPatient(null);
   };
 
-  console.log(selectedPatient);
-
   const handleCreatedPatientModal = (result) => {
     setVisiblePatientModal(false);
     setReload(!reload);
