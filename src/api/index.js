@@ -1,8 +1,9 @@
 import { notification } from "antd";
 import axios from "axios";
+import { baseURL } from "src/utils";
 
 export const instance = axios.create({
-  baseURL: "http://localhost:5000",
+  baseURL: baseURL,
   headers: {
     "Content-Type": "application/json",
   },

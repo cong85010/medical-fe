@@ -11,27 +11,38 @@ import {
   Tooltip,
   Flex,
   notification,
+  message,
 } from "antd";
 import { useCallback, useEffect, useState } from "react";
-import { LoadingOutlined, PlusOutlined } from "@ant-design/icons";
+import {
+  LoadingOutlined,
+  PlusOutlined,
+  UploadOutlined,
+} from "@ant-design/icons";
 import { STATUS_BOOKING, beforeUpload, getBase64 } from "src/utils";
 import { getListPrescription } from "src/api/prescription";
 import { DebounceSelect } from "../DeboundSelect";
 import { updateStatusAppointment } from "src/api/appointment";
+import { createMedicalRecord } from "src/api/medicalRecord";
+import { uploadFile, uploadFiles } from "src/api/upload";
 
 const ExaminationFormModal = ({
+  patientId,
+  doctorId,
   visible,
-  handleExaminationResultOk,
+  onCreated,
   onCancel,
 }) => {
   const [loading, setLoading] = useState(false);
-  const [imageUrl, setImageUrl] = useState();
   const [result, setResult] = useState("");
+  const [note, setNote] = useState("");
   const [prescriptionsAdded, setPrescriptionsAdded] = useState([]);
   const [prescription, setPrescription] = useState(null);
   const [quantity, setQuantity] = useState(0);
   const [afterEat, setAfterEat] = useState(true);
   const [form] = Form.useForm();
+  const [fileList, setFileList] = useState([]);
+
   const fetchPatientList = useCallback(async (param) => {
     try {
       const { prescriptions } = await getListPrescription({
@@ -52,37 +63,37 @@ const ExaminationFormModal = ({
     }
   }, []);
 
-  const handleChange = (info) => {
-    if (info.file.status === "uploading") {
-      setLoading(true);
-      return;
-    }
-    if (info.file.status === "done") {
-      // Get this url from response in real world.
-      getBase64(info.file.originFileObj, (url) => {
-        setLoading(false);
-        setImageUrl(url);
-      });
-    }
-  };
-  const uploadButton = (
-    <button
-      style={{
-        border: 0,
-        background: "none",
-      }}
-      type="button"
-    >
-      {loading ? <LoadingOutlined /> : <PlusOutlined />}
-      <div
-        style={{
-          marginTop: 8,
-        }}
-      >
-        Upload
-      </div>
-    </button>
-  );
+  // const handleChange = (info) => {
+  //   if (info.file.status === "uploading") {
+  //     setLoading(true);
+  //     return;
+  //   }
+  //   if (info.file.status === "done") {
+  //     // Get this url from response in real world.
+  //     getBase64(info.file.originFileObj, (url) => {
+  //       setLoading(false);
+  //       setImageUrl(url);
+  //     });
+  //   }
+  // };
+  // const uploadButton = (
+  //   <button
+  //     style={{
+  //       border: 0,
+  //       background: "none",
+  //     }}
+  //     type="button"
+  //   >
+  //     {loading ? <LoadingOutlined /> : <PlusOutlined />}
+  //     <div
+  //       style={{
+  //         marginTop: 8,
+  //       }}
+  //     >
+  //       Upload
+  //     </div>
+  //   </button>
+  // );
 
   const columns = [
     {
@@ -136,16 +147,71 @@ const ExaminationFormModal = ({
   const handleOK = () => {
     form
       .validateFields()
-      .then((values) => {
-        handleExaminationResultOk({
+      .then(async (values) => {
+        const { fileURLs } = await uploadFiles(fileList);
+
+        const { medicalRecord } = await createMedicalRecord({
           result: values.result,
-          image: imageUrl,
+          files: fileURLs,
           prescriptions: prescriptionsAdded,
+          note: values.note,
+          patientId: patientId,
+          doctorId: doctorId,
         });
+
+        notification.success({
+          message: "Thành công",
+          description: "Lưu kết quả khám bệnh thành công",
+        });
+        onCreated(medicalRecord);
       })
       .catch((info) => {
+        notification.error({
+          message: "Lỗi",
+          description: "Có lỗi xảy ra!",
+        });
         console.log("Validate Failed:", info);
       });
+  };
+
+  const handleChange = (info) => {
+    let newFileList = [...info.fileList];
+
+    // 1. Limit the number of uploaded files
+    // Only to show two recent uploaded files, and old ones will be replaced by the new
+    newFileList = newFileList.slice(-2);
+
+    // 2. Read from response and show file link
+    newFileList = newFileList.map((file) => {
+      if (file.response) {
+        // Component will show file.url as link
+        file.url = file.response.url;
+      }
+      return file;
+    });
+    setFileList(newFileList);
+  };
+
+  const props = {
+    multiple: false,
+    onRemove: (file) => {
+      const index = fileList.indexOf(file);
+      const newFileList = fileList.slice();
+      newFileList.splice(index, 1);
+      setFileList(newFileList);
+    },
+    beforeUpload: (file) => {
+      const notShowError = file.type.includes('image') || file.type.includes('document') || file.type.includes('pdf');
+      if (!notShowError) {
+        message.error(`${file.name} is not a png file`);
+        return;
+      }
+
+
+      setFileList([...fileList, file]);
+      return false;
+    },
+    fileList,
   };
 
   return (
@@ -182,9 +248,8 @@ const ExaminationFormModal = ({
           />
         </Form.Item>
         <Form.Item label="Hình ảnh" name="image">
-          <Upload
+          {/* <Upload
             name="avatar"
-            accept=".jpg, .jpeg, .png"
             listType="picture-card"
             className="avatar-uploader"
             showUploadList={false}
@@ -203,7 +268,18 @@ const ExaminationFormModal = ({
             ) : (
               uploadButton
             )}
+          </Upload> */}
+
+          <Upload {...props} fileList={fileList}>
+            <Button icon={<UploadOutlined />}>Đính kèm</Button>
           </Upload>
+        </Form.Item>
+        <Form.Item label="Lưu ý" name="note">
+          <Input.TextArea
+            placeholder="Lưu ý cho bệnh nhân"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+          />
         </Form.Item>
         <Form.Item label="Đơn thuốc">
           <Flex justify="space-between">

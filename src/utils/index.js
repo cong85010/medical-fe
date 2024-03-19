@@ -1,5 +1,7 @@
-import { notification } from "antd";
+import { FileOutlined } from "@ant-design/icons";
+import { Image, notification } from "antd";
 import dayjs from "dayjs";
+import PDFViewer from "pdf-viewer-reactjs";
 
 export const TYPE_EMPLOYEE = {
   admin: "admin",
@@ -36,7 +38,7 @@ export const STATUS_BOOKING_STR = {
 };
 
 export const STATUS_BOOKING_COLOR = {
-  finished: 'green',
+  finished: "green",
   booked: "blue",
   examining: "cyan",
   waiting: "orange",
@@ -171,16 +173,27 @@ export const TIME_PHYSICAL_EXAM = 30;
 
 export const FORMAT_DATE = "DD/MM/YYYY";
 export const FORMAT_DATE_MONGO = "YYYY-MM-DD";
+export const FORMAT_DATE_MONGO_ISO = "YYYY-MM-DDTHH:mm:ssZ";
+export const FORMAT_DATE_TIME = "DD/MM/YYYY HH:mm";
 export const FORMAT_TIME = "HH:mm";
+export const baseURL = "http://localhost:5000";
 
 export const getToday = () => {
   return dayjs().format(FORMAT_DATE);
 };
 
-export const formatedDate = (date, format = null) => {
-  return dayjs(date, format || FORMAT_DATE).format(FORMAT_DATE);
+export const formatedDate = (
+  date,
+  format = FORMAT_DATE,
+  formatStr = FORMAT_DATE
+) => {
+  return dayjs(date, format).format(formatStr);
 };
 
 export const formatedTime = (date) => {
   return dayjs(date, FORMAT_TIME).format(FORMAT_TIME);
+};
+
+export const getSourceImage = (url) => {
+  return `${baseURL}/${url}`;
 };

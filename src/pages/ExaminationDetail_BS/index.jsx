@@ -12,17 +12,23 @@ import {
   notification,
   Flex,
   Popconfirm,
+  Image,
+  Tooltip,
 } from "antd";
 import ExaminationFormModal from "src/components/ExaminationFormModal";
 import { useNavigate, useParams } from "react-router-dom";
 import {
+  FORMAT_DATE,
+  FORMAT_DATE_TIME,
   FORMAT_TIME,
   STATUS_BOOKING,
   STATUS_BOOKING_COLOR,
   STATUS_BOOKING_STR,
   TIME_PHYSICAL_EXAM,
   birthdayAndAge,
+  formatedDate,
   formatedTime,
+  getSourceImage,
   getSpecialtyName,
 } from "src/utils";
 import dayjs from "dayjs";
@@ -33,20 +39,35 @@ import {
 } from "src/api/appointment";
 import Title from "src/components/Title";
 import AddPrescription from "src/components/AddPrescription";
-import { CheckCircleOutlined } from "@ant-design/icons";
+import {
+  CheckCircleOutlined,
+  EyeOutlined,
+  FileOutlined,
+} from "@ant-design/icons";
+import { getListMedicalRecord } from "src/api/medicalRecord";
+import UserItem from "src/components/UserItem";
+import PrescriptionModal from "src/components/PrescriptionModal";
 
 const { Option } = Select;
 
 const ExaminationDetailPage = () => {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [examinationHistory, setExaminationHistory] = useState([]);
-  const [diagnosis, setDiagnosis] = useState("");
-  const [prescription, setPrescription] = useState("");
   const [isExaminationModalVisible, setIsExaminationModalVisible] =
     useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState(null);
+
+  const [reloadMedical, setReloadMedical] = useState(false);
+
   const params = useParams();
   const { id: appointmentId } = params;
   const navigate = useNavigate();
+
+  const handleCloseModal = () => {
+    setModalVisible(false);
+    setSelectedRecord(null);
+  };
 
   // Simulating fetching patients from an API
   useEffect(() => {
@@ -66,20 +87,19 @@ const ExaminationDetailPage = () => {
     // Simulating fetching examination history for the selected patient
     const fetchExaminationHistory = async () => {
       if (selectedPatient) {
-        // try {
-        //   const response = await fetch(
-        //     `https://api.example.com/examination-history/${selectedPatient.id}`
-        //   );
-        //   const data = await response.json();
-        //   setExaminationHistory(data);
-        // } catch (error) {
-        //   console.error("Error fetching examination history:", error);
-        // }
+        try {
+          const { medicalRecords } = await getListMedicalRecord({
+            patientId: selectedPatient?.patientId?._id,
+          });
+          setExaminationHistory(medicalRecords);
+        } catch (error) {
+          console.error("Error fetching examination history:", error);
+        }
       }
     };
 
     fetchExaminationHistory();
-  }, [selectedPatient]);
+  }, [selectedPatient, reloadMedical]);
 
   const handleUpdateStatus = () => {
     try {
@@ -96,16 +116,86 @@ const ExaminationDetailPage = () => {
     }
   };
 
+  const getTypeFile = (url) => {
+    const urlBE = getSourceImage(url);
+    if (!url) return "";
+
+    if (url.includes("pdf") || url.includes("docx")) {
+      return (
+        <Tooltip title="Tài liệu">
+          <Button icon={<FileOutlined />} href={urlBE} target="_blank" />
+        </Tooltip>
+      );
+    }
+    return (
+      <Image
+        src={urlBE}
+        alt="hinhanh"
+        width={50}
+        style={{ borderRadius: 10 }}
+      />
+    );
+  };
+
   const columns = [
     {
-      title: "Patient ID",
-      dataIndex: "id",
-      key: "id",
+      title: "Ngày khám",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      width: 160,
+      render: (createdAt) => dayjs(createdAt).format(FORMAT_DATE_TIME),
     },
     {
-      title: "Name",
-      dataIndex: "name",
-      key: "name",
+      width: 170,
+      title: "Bệnh nhân",
+      dataIndex: "patientId",
+      key: "patientId",
+      render: (patientId) => {
+        return <UserItem user={patientId} showBirthDay />;
+      },
+    },
+    {
+      width: 170,
+      title: "Bác sĩ",
+      dataIndex: "doctorId",
+      key: "doctorId",
+      render: (doctorId) => {
+        return <UserItem user={doctorId} />;
+      },
+    },
+    {
+      title: "Kết quả",
+      dataIndex: "result",
+      key: "result",
+    },
+    {
+      title: "Lưu ý",
+      dataIndex: "note",
+      key: "note",
+    },
+    {
+      title: "Đơn thuốc",
+      dataIndex: "prescriptions",
+      key: "prescriptions",
+      render: (prescriptions, record) => {
+        return (
+          <Button
+            icon={<EyeOutlined />}
+            onClick={() => {
+              setSelectedRecord(record);
+              setModalVisible(true);
+            }}
+          />
+        );
+      },
+    },
+    {
+      title: "Hình ảnh",
+      dataIndex: "files",
+      key: "files",
+      render: (files) => {
+        return <Flex gap={5}>{files?.map((file) => getTypeFile(file))}</Flex>;
+      },
     },
     {
       title: "Action",
@@ -140,6 +230,12 @@ const ExaminationDetailPage = () => {
   const handleCancel = (patient) => {
     setIsExaminationModalVisible(false);
     // Handle prescribing logic here
+  };
+
+  const handleCreatedMedical = (patient) => {
+    setIsExaminationModalVisible(false);
+
+    setReloadMedical(!reloadMedical);
   };
 
   return (
@@ -178,8 +274,7 @@ const ExaminationDetailPage = () => {
             label="Thời gian khám"
             style={{ fontWeight: "bold" }}
           >
-            {selectedPatient?.date} | {" "}
-            {selectedPatient?.time} ~{" "}
+            {selectedPatient?.date} | {selectedPatient?.time} ~{" "}
             {formatedTime(
               dayjs(selectedPatient?.time, FORMAT_TIME).add(
                 TIME_PHYSICAL_EXAM,
@@ -214,25 +309,19 @@ const ExaminationDetailPage = () => {
           }
         />
 
-        <Table
-          dataSource={examinationHistory}
-          columns={[
-            {
-              title: "Date",
-              dataIndex: "date",
-              key: "date",
-            },
-            {
-              title: "Result",
-              dataIndex: "result",
-              key: "result",
-            },
-          ]}
-        />
+        <Table dataSource={examinationHistory} columns={columns} />
       </div>
       <ExaminationFormModal
         visible={isExaminationModalVisible}
+        patientId={selectedPatient?.patientId?._id}
+        doctorId={selectedPatient?.doctorId?._id}
         onCancel={handleCancel}
+        onCreated={handleCreatedMedical}
+      />
+      <PrescriptionModal
+        selected={selectedRecord}
+        visible={modalVisible}
+        onCancel={handleCloseModal}
       />
     </div>
   );
