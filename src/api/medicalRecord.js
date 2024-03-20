@@ -14,8 +14,8 @@ export const getMedicalRecord = async (id) => {
   return response;
 };
 
-export const updateMedicalRecord = async (id, body) => {
-  const response = await instance.put(`${baseURL}/${id}`, body);
+export const updateMedicalRecord = async (body) => {
+  const response = await instance.put(`${baseURL}`, body);
 
   return response;
 };

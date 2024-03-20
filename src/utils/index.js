@@ -195,5 +195,5 @@ export const formatedTime = (date) => {
 };
 
 export const getSourceImage = (url) => {
-  return `${baseURL}/${url}`;
+  return `${baseURL}/uploads/${url}`;
 };

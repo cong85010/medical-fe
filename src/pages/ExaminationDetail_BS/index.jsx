@@ -14,8 +14,9 @@ import {
   Popconfirm,
   Image,
   Tooltip,
+  Typography,
 } from "antd";
-import ExaminationFormModal from "src/components/ExaminationFormModal";
+import MedicalRecordModal from "src/components/MedicalRecordModal";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   FORMAT_DATE,
@@ -41,8 +42,13 @@ import Title from "src/components/Title";
 import AddPrescription from "src/components/AddPrescription";
 import {
   CheckCircleOutlined,
+  EditFilled,
+  EditOutlined,
   EyeOutlined,
   FileOutlined,
+  FilePdfOutlined,
+  FolderOpenOutlined,
+  MinusOutlined,
 } from "@ant-design/icons";
 import { getListMedicalRecord } from "src/api/medicalRecord";
 import UserItem from "src/components/UserItem";
@@ -123,7 +129,7 @@ const ExaminationDetailPage = () => {
     if (url.includes("pdf") || url.includes("docx")) {
       return (
         <Tooltip title="Tài liệu">
-          <Button icon={<FileOutlined />} href={urlBE} target="_blank" />
+          <Button icon={<FilePdfOutlined />} href={urlBE} target="_blank" />
         </Tooltip>
       );
     }
@@ -132,7 +138,8 @@ const ExaminationDetailPage = () => {
         src={urlBE}
         alt="hinhanh"
         width={50}
-        style={{ borderRadius: 10 }}
+        height={50}
+        style={{ borderRadius: 10, objectFit: "cover" }}
       />
     );
   };
@@ -147,20 +154,11 @@ const ExaminationDetailPage = () => {
     },
     {
       width: 170,
-      title: "Bệnh nhân",
-      dataIndex: "patientId",
-      key: "patientId",
-      render: (patientId) => {
-        return <UserItem user={patientId} showBirthDay />;
-      },
-    },
-    {
-      width: 170,
       title: "Bác sĩ",
       dataIndex: "doctorId",
       key: "doctorId",
       render: (doctorId) => {
-        return <UserItem user={doctorId} />;
+        return <UserItem user={doctorId} showSpecialty />;
       },
     },
     {
@@ -174,11 +172,12 @@ const ExaminationDetailPage = () => {
       key: "note",
     },
     {
+      align: "center",
       title: "Đơn thuốc",
       dataIndex: "prescriptions",
       key: "prescriptions",
       render: (prescriptions, record) => {
-        return (
+        return prescriptions.length > 0 ? (
           <Button
             icon={<EyeOutlined />}
             onClick={() => {
@@ -186,39 +185,52 @@ const ExaminationDetailPage = () => {
               setModalVisible(true);
             }}
           />
+        ) : (
+          <Tooltip title="Trống">
+            <MinusOutlined />
+          </Tooltip>
         );
       },
     },
     {
-      title: "Hình ảnh",
+      align: "center",
+      title: "Tư liệu",
       dataIndex: "files",
       key: "files",
       render: (files) => {
-        return <Flex gap={5}>{files?.map((file) => getTypeFile(file))}</Flex>;
+        return files.length > 0 ? (
+          <Flex gap={5}>{files?.map((file) => getTypeFile(file))}</Flex>
+        ) : (
+          <Tooltip title="Trống">
+            <MinusOutlined />
+          </Tooltip>
+        );
       },
     },
     {
-      title: "Action",
+      width: 150,
+      title: "Hành động",
       key: "action",
-      render: (record) => (
-        <Space>
-          <Button type="primary" onClick={() => handleExamine(record)}>
-            Examine
-          </Button>
-          <Button
-            type="primary"
-            onClick={() => handlePrescribe(record)}
-            disabled={!selectedPatient}
-          >
-            Prescribe
-          </Button>
-        </Space>
-      ),
+      render: (_, record, indx) => {
+        return (
+          indx === 0 && (
+            <Space>
+              <Tooltip title="Chỉnh sửa">
+                <Button
+                  icon={<EditOutlined />}
+                  onClick={() => handleEditRecord(record)}
+                />
+              </Tooltip>
+            </Space>
+          )
+        );
+      },
     },
   ];
 
-  const handleExamine = (patient) => {
-    setSelectedPatient(patient);
+  const handleEditRecord = (record) => {
+    setSelectedRecord(record);
+    setIsExaminationModalVisible(true);
     // Handle examination logic here
   };
 
@@ -229,6 +241,7 @@ const ExaminationDetailPage = () => {
 
   const handleCancel = (patient) => {
     setIsExaminationModalVisible(false);
+    setSelectedRecord(null);
     // Handle prescribing logic here
   };
 
@@ -259,9 +272,9 @@ const ExaminationDetailPage = () => {
         }
       />
       <div>
-        <h2>Thông tin bệnh nhân</h2>
+        <Title title="Thông tin bệnh nhân" />
         <Descriptions column={2} bordered>
-          <Descriptions.Item label="Bệnh nhân">
+          <Descriptions.Item label="Bệnh nhân" style={{ fontWeight: "bold" }}>
             {selectedPatient?.patientId?.fullName}
           </Descriptions.Item>
           <Descriptions.Item label="Ngày sinh">
@@ -311,10 +324,11 @@ const ExaminationDetailPage = () => {
 
         <Table dataSource={examinationHistory} columns={columns} />
       </div>
-      <ExaminationFormModal
+      <MedicalRecordModal
         visible={isExaminationModalVisible}
         patientId={selectedPatient?.patientId?._id}
         doctorId={selectedPatient?.doctorId?._id}
+        medicalRecord={selectedRecord}
         onCancel={handleCancel}
         onCreated={handleCreatedMedical}
       />
