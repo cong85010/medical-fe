@@ -1,5 +1,5 @@
 import { FileOutlined } from "@ant-design/icons";
-import { Image, notification } from "antd";
+import { Image, Tag, notification } from "antd";
 import dayjs from "dayjs";
 import PDFViewer from "pdf-viewer-reactjs";
 
@@ -196,4 +196,8 @@ export const formatedTime = (date) => {
 
 export const getSourceImage = (url) => {
   return `${baseURL}/uploads/${url}`;
+};
+
+export const getIdxTable = (idx, page = 1, pageSize = 10) => {
+  return (page - 1) * pageSize + idx + 1;
 };

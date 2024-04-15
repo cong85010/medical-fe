@@ -21,7 +21,7 @@ import {
   UploadOutlined,
 } from "@ant-design/icons";
 import { STATUS_BOOKING, beforeUpload, getBase64 } from "src/utils";
-import { getListPrescription } from "src/api/prescription";
+import { getListMedicine } from "src/api/medicine";
 import { DebounceSelect } from "../DeboundSelect";
 import { updateStatusAppointment } from "src/api/appointment";
 import {
@@ -39,8 +39,8 @@ const MedicalRecordModal = ({
   medicalRecord,
 }) => {
   const [loading, setLoading] = useState(false);
-  const [prescriptionsAdded, setPrescriptionsAdded] = useState([]);
-  const [prescription, setPrescription] = useState(null);
+  const [medicinesAdded, setMedicinesAdded] = useState([]);
+  const [medicine, setMedicine] = useState(null);
   const [quantity, setQuantity] = useState(0);
   const [afterEat, setAfterEat] = useState(true);
   const [form] = Form.useForm();
@@ -49,7 +49,7 @@ const MedicalRecordModal = ({
   useEffect(() => {
     if (visible && medicalRecord) {
       form.setFieldsValue(medicalRecord);
-      setPrescriptionsAdded(medicalRecord.prescriptions);
+      setMedicinesAdded(medicalRecord.medicines);
       setFileList(
         medicalRecord.files.map((file) => {
           return {
@@ -64,13 +64,13 @@ const MedicalRecordModal = ({
     }
   }, [form, medicalRecord, visible]);
 
-  const fetchPatientList = useCallback(async (param) => {
+  const fetchMedicienList = useCallback(async (param) => {
     try {
-      const { prescriptions } = await getListPrescription({
+      const { medicines } = await getListMedicine({
         searchKey: param,
       });
 
-      return prescriptions?.map((item) => {
+      return medicines?.map((item) => {
         return {
           label: `${item.name || "Chưa xác định"} - Sl: ${item.quantity}`,
           name: item.name,
@@ -84,11 +84,11 @@ const MedicalRecordModal = ({
     }
   }, []);
 
-  const handleRemovePrescription = (record) => {
-    const listPrescriptions = prescriptionsAdded.filter(
+  const handleRemoveMedicine = (record) => {
+    const listMedicines = medicinesAdded.filter(
       (item) => item.name !== record.name
     );
-    setPrescriptionsAdded(listPrescriptions);
+    setMedicinesAdded(listMedicines);
   };
 
   const columns = [
@@ -117,7 +117,7 @@ const MedicalRecordModal = ({
         return (
           <Tooltip>
             <Button
-              onClick={() => handleRemovePrescription(record)}
+              onClick={() => handleRemoveMedicine(record)}
               icon={<DeleteOutlined color="red" />}
             />
           </Tooltip>
@@ -127,28 +127,28 @@ const MedicalRecordModal = ({
   ];
 
   const handleAddMedicine = () => {
-    if (prescription) {
-      const addedIdx = prescriptionsAdded.findIndex(
-        (item) => item._id === prescription._id
+    if (medicine) {
+      const addedIdx = medicinesAdded.findIndex(
+        (item) => item._id === medicine._id
       );
 
-      const listPrescriptions = [...prescriptionsAdded];
+      const listMedicines = [...medicinesAdded];
       if (addedIdx !== -1) {
-        listPrescriptions.splice(addedIdx, 1);
+        listMedicines.splice(addedIdx, 1);
       }
 
-      const newPrescription = {
-        _id: prescription._id,
-        name: prescription.name,
+      const newMedicine = {
+        _id: medicine._id,
+        name: medicine.name,
         quantity: quantity,
         affterEat: afterEat,
       };
 
-      listPrescriptions.unshift(newPrescription);
-      setPrescriptionsAdded(listPrescriptions);
+      listMedicines.unshift(newMedicine);
+      setMedicinesAdded(listMedicines);
       setQuantity(quantity);
       setAfterEat(true);
-      setPrescription(null);
+      setMedicine(null);
     }
   };
 
@@ -168,7 +168,7 @@ const MedicalRecordModal = ({
             ...medicalRecord,
             result: values.result,
             files: files,
-            prescriptions: prescriptionsAdded,
+            medicines: medicinesAdded,
             note: values.note,
             patientId: patientId,
             doctorId: doctorId,
@@ -185,7 +185,7 @@ const MedicalRecordModal = ({
           const { medicalRecord } = await createMedicalRecord({
             result: values.result,
             files: files,
-            prescriptions: prescriptionsAdded,
+            medicines: medicinesAdded,
             note: values.note,
             patientId: patientId,
             doctorId: doctorId,
@@ -304,17 +304,17 @@ const MedicalRecordModal = ({
           <Flex justify="space-between">
             <DebounceSelect
               style={{ width: 190 }}
-              selectId="prescription"
+              selectId="medicine"
               placeholder="Chọn thuốc"
-              fetchOptions={fetchPatientList}
-              onChange={(value) => setPrescription(value)}
+              fetchOptions={fetchMedicienList}
+              onChange={(value) => setMedicine(value)}
               initValue=""
             />
             <InputNumber
               onCHan
               style={{ width: 60 }}
               min={0}
-              max={prescription ? prescription.quantity : undefined}
+              max={medicine ? medicine.quantity : undefined}
               placeholder="Số lượng"
               value={quantity}
               onChange={(value) => setQuantity(value)}
@@ -330,9 +330,9 @@ const MedicalRecordModal = ({
             <Button
               type="primary"
               disabled={
-                !prescription ||
+                !medicine ||
                 quantity === 0 ||
-                quantity > prescription?.quantity
+                quantity > medicine?.quantity
               }
               onClick={handleAddMedicine}
             >
@@ -343,7 +343,7 @@ const MedicalRecordModal = ({
         <Table
           rowKey="_id"
           columns={columns}
-          dataSource={prescriptionsAdded}
+          dataSource={medicinesAdded}
           pagination={false}
           scroll={{ y: 220 }}
         />

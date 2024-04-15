@@ -13,10 +13,10 @@ const columns = [
   },
   {
     title: "Trước/Sau ăn",
-    dataIndex: "timing",
-    key: "timing",
-    render: (timing) => (
-      <Tag color={timing === "Trước ăn" ? "green" : "volcano"}>{timing}</Tag>
+    dataIndex: "usage",
+    key: "usage",
+    render: (usage) => (
+      <Tag color={usage === "before" ? "green" : "volcano"}>{usage}</Tag>
     ),
   },
   {

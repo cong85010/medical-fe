@@ -1,25 +1,36 @@
-import React, { useState, useEffect } from "react";
 import {
-  Table,
+  CheckCircleOutlined,
+  EditOutlined,
+  EyeOutlined,
+  FilePdfOutlined,
+  MinusOutlined
+} from "@ant-design/icons";
+import {
   Button,
-  Form,
-  Input,
+  Descriptions,
+  Flex,
+  Image,
+  Popconfirm,
   Select,
   Space,
+  Table,
   Tag,
-  Descriptions,
-  Modal,
-  notification,
-  Flex,
-  Popconfirm,
-  Image,
   Tooltip,
-  Typography,
+  notification
 } from "antd";
-import MedicalRecordModal from "src/components/MedicalRecordModal";
+import dayjs from "dayjs";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  FORMAT_DATE,
+  getAppointment,
+  updateStatusAppointment
+} from "src/api/appointment";
+import { getListMedicalRecord } from "src/api/medicalRecord";
+import MedicalRecordModal from "src/components/MedicalRecordModal";
+import MedicineModal from "src/components/MedicineModal";
+import Title from "src/components/Title";
+import UserItem from "src/components/UserItem";
+import {
   FORMAT_DATE_TIME,
   FORMAT_TIME,
   STATUS_BOOKING,
@@ -27,32 +38,10 @@ import {
   STATUS_BOOKING_STR,
   TIME_PHYSICAL_EXAM,
   birthdayAndAge,
-  formatedDate,
   formatedTime,
   getSourceImage,
-  getSpecialtyName,
+  getSpecialtyName
 } from "src/utils";
-import dayjs from "dayjs";
-import {
-  getAppointment,
-  getListAppointment,
-  updateStatusAppointment,
-} from "src/api/appointment";
-import Title from "src/components/Title";
-import AddPrescription from "src/components/AddPrescription";
-import {
-  CheckCircleOutlined,
-  EditFilled,
-  EditOutlined,
-  EyeOutlined,
-  FileOutlined,
-  FilePdfOutlined,
-  FolderOpenOutlined,
-  MinusOutlined,
-} from "@ant-design/icons";
-import { getListMedicalRecord } from "src/api/medicalRecord";
-import UserItem from "src/components/UserItem";
-import PrescriptionModal from "src/components/PrescriptionModal";
 
 const { Option } = Select;
 
@@ -174,10 +163,10 @@ const ExaminationDetailPage = () => {
     {
       align: "center",
       title: "Đơn thuốc",
-      dataIndex: "prescriptions",
-      key: "prescriptions",
-      render: (prescriptions, record) => {
-        return prescriptions.length > 0 ? (
+      dataIndex: "medicines",
+      key: "medicines",
+      render: (medicines, record) => {
+        return medicines.length > 0 ? (
           <Button
             icon={<EyeOutlined />}
             onClick={() => {
@@ -332,7 +321,7 @@ const ExaminationDetailPage = () => {
         onCancel={handleCancel}
         onCreated={handleCreatedMedical}
       />
-      <PrescriptionModal
+      <MedicineModal
         selected={selectedRecord}
         visible={modalVisible}
         onCancel={handleCloseModal}

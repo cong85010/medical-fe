@@ -2,7 +2,7 @@ import React from "react";
 import { Modal } from "antd";
 import { FORMAT_DATE_MONGO, FORMAT_DATE_MONGO_ISO, FORMAT_DATE_TIME, formatedDate } from "src/utils";
 
-const PrescriptionModal = ({ selected, visible, onCancel }) => {
+const MedicineModal = ({ selected, visible, onCancel }) => {
   return (
     <Modal
       title={`Đơn thuốc ngày: ${formatedDate(
@@ -15,7 +15,7 @@ const PrescriptionModal = ({ selected, visible, onCancel }) => {
       onCancel={onCancel}
       footer={null}
     >
-      {selected?.prescriptions.map((item) => (
+      {selected?.medicines.map((item) => (
         <div key={item._id}>
           <p>
             {item.name} - {item.quantity} viên -{" "}
@@ -27,4 +27,4 @@ const PrescriptionModal = ({ selected, visible, onCancel }) => {
   );
 };
 
-export default PrescriptionModal;
+export default MedicineModal;

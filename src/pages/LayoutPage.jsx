@@ -14,6 +14,8 @@ import {
   UsergroupAddOutlined,
   ClockCircleOutlined,
   CheckCircleOutlined,
+  MedicineBoxOutlined,
+  ShoppingOutlined,
 } from "@ant-design/icons";
 import {
   Layout,
@@ -184,9 +186,15 @@ const LayoutPage = () => {
       case TYPE_EMPLOYEE.sales: {
         menuItems.push({
           key: "sales",
-          icon: <UploadOutlined />,
+          icon: <ShoppingOutlined />,
           label: "Bán hàng",
           link: "/sales",
+        });
+        menuItems.push({
+          key: "medicine",
+          icon: <MedicineBoxOutlined />,
+          label: "Thuốc",
+          link: "/medicine",
         });
         break;
       }
@@ -249,7 +257,7 @@ const LayoutPage = () => {
       >
         <Typography.Title
           level={5}
-          style={{ fontWeight: "bold", textAlign: "center" }}
+          style={{ fontWeight: "bold", textAlign: "center", height: 64, lineHeight: "64px"}}
         >
           MEDICAL
         </Typography.Title>

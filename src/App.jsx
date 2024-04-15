@@ -21,6 +21,7 @@ import AppointmentsPage from "./pages/Appointments_BN";
 import ExaminationDetailPage from "./pages/ExaminationDetail_BS";
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
+import MedicinePage from "./pages/Medicine_BH";
 
 dayjs.extend(customParseFormat)
 const PrivateRoute = ({ element, requiredPermission = [] }) => {
@@ -168,6 +169,24 @@ function App() {
               <PrivateRoute
                 element={<AppointmentPatientPage />}
                 requiredPermission={[TYPE_EMPLOYEE.administrative]}
+              />
+            }
+          />
+          <Route
+            path="/medicine"
+            element={
+              <PrivateRoute
+                element={<MedicinePage />}
+                requiredPermission={[TYPE_EMPLOYEE.sales]}
+              />
+            }
+          />
+          <Route
+            path="/sales"
+            element={
+              <PrivateRoute
+                element={<MedicinePage />}
+                requiredPermission={[TYPE_EMPLOYEE.sales]}
               />
             }
           />

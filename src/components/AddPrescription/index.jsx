@@ -1,7 +1,7 @@
 import { Form, message, Modal, Switch, Select, Input } from "antd";
 import { useEffect, useState } from "react";
 
-export default function AddPrescription({
+export default function AddMedicine({
   visible,
   onClose,
   onCreate
