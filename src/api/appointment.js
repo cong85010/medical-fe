@@ -29,6 +29,12 @@ export const getListAppointment = async (params = {}) => {
   return response;
 };
 
+export const getListAppointmentQuery = async (body) => {
+  const response = await instance.post(`${baseURL}/query`, body);
+
+  return response;
+};
+
 export const getAppointment = async (userId) => {
   const response = await instance.get(`${baseURL}/${userId}`);
 

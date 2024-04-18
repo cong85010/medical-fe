@@ -20,6 +20,7 @@ export const TYPE_EMPLOYEE_STR = {
 };
 
 export const STATUS_BOOKING = {
+  medicined: "medicined",
   finished: "finished",
   booked: "booked",
   waiting: "waiting",
@@ -29,6 +30,7 @@ export const STATUS_BOOKING = {
 };
 
 export const STATUS_BOOKING_STR = {
+  medicined: "Đã kê toa",
   finished: "Đã khám",
   booked: "Đã đặt",
   waiting: "Chờ khám",
@@ -38,6 +40,7 @@ export const STATUS_BOOKING_STR = {
 };
 
 export const STATUS_BOOKING_COLOR = {
+  medicined: "lime",
   finished: "green",
   booked: "blue",
   examining: "cyan",
@@ -53,6 +56,51 @@ export const colorOfType = {
   sales: "orange",
   user: "purple",
 };
+
+export const STATUS_MEDICAL = {
+  examined: "examined",
+  medicined: "medicined",
+}
+
+export const STATUS_MEDICAL_STR = {
+  examined: "Đã khám",
+  medicined: "Đã kê toa",
+}
+
+export const STATUS_MEDICAL_COLOR = {
+  examined: "green",
+  medicined: "blue",
+}
+
+export const STATUS_ORDER = {
+  pending: "pending",
+  paid: "paid",
+}
+
+export const STATUS_ORDER_STR = {
+  pending: "Chờ xác nhận",
+  paid: "Đã thanh toán",
+}
+
+export const STATUS_ORDER_COLOR = {
+  pending: "orange",
+  paid: "blue",
+}
+
+export const PAYMENT_ORDER = {
+  cash: "cash",
+  banking: "banking",
+}
+
+export const PAYMENT_ORDER_STR = {
+  cash: "Tiền mặt",
+  banking: "Chuyển khoản",
+}
+
+export const PAYMENT_ORDER_COLOR = {
+  cash: "green",
+  banking: "blue",
+}
 
 export const birthdayAndAge = (date) => {
   return `${dayjs(date).format(FORMAT_DATE)}- ${dayjs().diff(
@@ -200,4 +248,12 @@ export const getSourceImage = (url) => {
 
 export const getIdxTable = (idx, page = 1, pageSize = 10) => {
   return (page - 1) * pageSize + idx + 1;
+};
+
+export const formatPrice = (price) => {
+  if (!price) price =0;
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(price);
 };

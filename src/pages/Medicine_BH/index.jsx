@@ -1,5 +1,7 @@
 // AppointmentPage.js
 import {
+  DeleteOutlined,
+  EditOutlined,
   PlusOutlined,
   ReloadOutlined,
   SearchOutlined,
@@ -11,6 +13,7 @@ import {
   Input,
   InputNumber,
   Modal,
+  Popconfirm,
   Radio,
   Select,
   Table,
@@ -22,7 +25,12 @@ import {
 import dayjs from "dayjs";
 import { useCallback, useEffect, useState } from "react";
 import { updateStatusAppointment } from "src/api/appointment";
-import { createMedicine, getListMedicine } from "src/api/medicine";
+import {
+  createMedicine,
+  deleteMedicine,
+  getListMedicine,
+  updateMedicine,
+} from "src/api/medicine";
 import Title from "src/components/Title";
 import { FORMAT_DATE_TIME, STATUS_BOOKING, getIdxTable } from "src/utils";
 import { getUsagesTable } from "src/utils/utilJsx";
@@ -30,6 +38,7 @@ import { getUsagesTable } from "src/utils/utilJsx";
 const MedicinePage = () => {
   const [form] = Form.useForm();
   const [showAddModal, setShowAddModal] = useState(false);
+  const [isCreate, setIsCreate] = useState(true);
   const [filterDate, setFilterDate] = useState(dayjs());
   const [keyword, setKeyword] = useState("");
   const [listMedicine, setListMedicine] = useState([]);
@@ -89,26 +98,46 @@ const MedicinePage = () => {
       console.error("Error: ", error);
     }
   };
+
+  const handleShowEdit = (record) => {
+    form.setFieldsValue({
+      ...record,
+      name: [record.name],
+    });
+    setIsCreate(false);
+    setShowAddModal(true);
+  };
+
+  const handleDelete = async (record) => {
+    try {
+      await deleteMedicine(record._id);
+      message.success("Xóa thành công");
+      setReload(!reload);
+    } catch (error) {
+      message.error("Xóa thất bại");
+    }
+  };
+
   const columns = [
     {
-      title: "STT",
+      title: "#",
       dataIndex: "index",
       key: "index",
       align: "center",
-      width: 80,
+      width: 50,
       render: (text, record, index) => (
-        <Typography.Text strong style={{ fontSize: 17 }}>
-          {getIdxTable(index, pagination.page)}
-        </Typography.Text>
+        <Typography.Text>{getIdxTable(index, pagination.page)}</Typography.Text>
       ),
     },
     {
+      width: 200,
       title: "Tên thuốc",
       dataIndex: "name",
       key: "name",
       align: "center",
     },
     {
+      width: 100,
       title: "Số lượng",
       dataIndex: "quantity",
       key: "quantity",
@@ -122,10 +151,32 @@ const MedicinePage = () => {
       render: (text) => getUsagesTable(text),
     },
     {
+      width: 200,
       title: "Ghi chú",
       dataIndex: "note",
       key: "note",
       align: "center",
+      render: (text) => (
+        <Tooltip title={text}>
+          <Typography.Paragraph ellipsis={{ rows: 2 }}>
+            {text}
+          </Typography.Paragraph>
+        </Tooltip>
+      ),
+    },
+    {
+      width: 200,
+      title: "Mô tả",
+      dataIndex: "description",
+      key: "description",
+      align: "center",
+      render: (text) => (
+        <Tooltip title={text}>
+          <Typography.Paragraph ellipsis={{ rows: 2 }}>
+            {text}
+          </Typography.Paragraph>
+        </Tooltip>
+      ),
     },
     {
       title: "Ngày cập nhật",
@@ -133,6 +184,32 @@ const MedicinePage = () => {
       key: "updatedAt",
       align: "center",
       render: (text) => dayjs(text).format(FORMAT_DATE_TIME),
+    },
+    {
+      title: "Hành động",
+      dataIndex: "action",
+      key: "action",
+      align: "center",
+      render: (text, record) => (
+        <Flex gap={10}>
+          <Tooltip title="Sửa">
+            <Button
+              icon={<EditOutlined />}
+              onClick={() => handleShowEdit(record)}
+            />
+          </Tooltip>
+          <Popconfirm
+            title="Bạn có chắc chắn muốn xóa?"
+            okText="Xác nhận"
+            cancelText="Hủy"
+            onConfirm={() => handleDelete(record)}
+          >
+            <Tooltip title="Xóa">
+              <Button type="primary" icon={<DeleteOutlined />} danger ghost />
+            </Tooltip>
+          </Popconfirm>
+        </Flex>
+      ),
     },
   ];
 
@@ -157,10 +234,15 @@ const MedicinePage = () => {
           name: values.name[0],
         };
 
-        await createMedicine(data);
-        message.success("Thêm thuốc thành công");
+        if (isCreate) {
+          await createMedicine(data);
+          message.success("Thêm thuốc thành công");
+        } else {
+          await updateMedicine(data);
+          message.success("Cập nhật thuốc thành công");
+        }
         form.resetFields();
-        setShowAddModal(false);
+        handleCancel();
         setReload(!reload);
       })
       .catch((error) => {
@@ -171,6 +253,7 @@ const MedicinePage = () => {
 
   const handleCancel = () => {
     setShowAddModal(false);
+    setIsCreate(true);
   };
 
   const handleSearch = (newValue) => {
@@ -213,15 +296,17 @@ const MedicinePage = () => {
         loading={initLoading}
         columns={columns}
         dataSource={listMedicine}
-        scroll={{ x: 800, y: 500 }}
       />
       <Modal
-        title="Thêm thuốc"
+        title={isCreate ? "Thêm thuốc" : "Cập nhật thuốc"}
         open={showAddModal}
         onOk={handleOk}
         onCancel={handleCancel}
       >
         <Form form={form} labelCol={{ span: 5 }} labelAlign="left">
+          <Form.Item name="_id" hidden>
+            <Input />
+          </Form.Item>
           <Form.Item
             label="Tên thuốc"
             name="name"

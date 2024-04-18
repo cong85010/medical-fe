@@ -28,7 +28,7 @@ const SelectSpecialty = ({ specialty, onChange }) => {
           onClick={() => handleSpecialtyChange(specialty)}
         >
           <List.Item.Meta
-            title={specialty.name}
+            title={<b>{specialty.name}</b>}
             description={specialty.description}
           />
         </List.Item>

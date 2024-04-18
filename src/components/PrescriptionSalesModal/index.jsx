@@ -17,8 +17,9 @@ import {
   Select,
   Popconfirm,
   Tag,
+  Radio,
 } from "antd";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
@@ -29,7 +30,12 @@ import {
   ReloadOutlined,
   UploadOutlined,
 } from "@ant-design/icons";
-import { STATUS_BOOKING, beforeUpload, getBase64 } from "src/utils";
+import {
+  STATUS_BOOKING,
+  beforeUpload,
+  formatPrice,
+  getBase64,
+} from "src/utils";
 import { getListMedicine } from "src/api/medicine";
 import { DebounceSelect } from "../DeboundSelect";
 import { updateStatusAppointment } from "src/api/appointment";
@@ -38,14 +44,17 @@ import {
   updateMedicalRecord,
 } from "src/api/medicalRecord";
 import { uploadFile, uploadFiles } from "src/api/upload";
+import SpaceDiv from "../SpaceDiv";
+import { createOrder } from "src/api/order";
 
-const MedicalRecordModal = ({
-  patientId,
-  doctorId,
+const PrescriptionSalesModal = ({
+  medicalRecordId,
+  salesId,
   visible,
   onCreated,
   onCancel,
   medicalRecord,
+  medicinesImport,
 }) => {
   const [loading, setLoading] = useState(false);
   const [medicinesAdded, setMedicinesAdded] = useState([]);
@@ -58,6 +67,12 @@ const MedicalRecordModal = ({
   const [fileList, setFileList] = useState([]);
   const [optionMedicines, setOptionMedicines] = useState([]);
 
+  useEffect(() => {
+    if (medicinesImport) {
+      setMedicinesAdded(medicinesImport);
+    }
+  }, [medicinesImport]);
+
   const fetchMedicienList = useCallback(async (param) => {
     try {
       const { medicines } = await getListMedicine({
@@ -66,9 +81,12 @@ const MedicalRecordModal = ({
 
       const newData = medicines?.map((item) => {
         return {
-          label: `${item.name || "Chưa xác định"} - SL: ${item.quantity}`,
+          label: `${item.name || "Chưa xác định"} - SL: ${
+            item.quantity
+          } - ${formatPrice(item?.price)}`,
           name: item.name,
           quantity: item.quantity,
+          price: item?.price,
           value: item._id,
           _id: item._id,
         };
@@ -134,26 +152,29 @@ const MedicalRecordModal = ({
       },
     },
     {
-      title: "SL",
+      title: "Số lượng",
       dataIndex: "quantity",
       key: "quantity",
-      width: 80,
-      align: "center",
+      width: 120,
+      align: "end",
     },
     {
-      align: "center",
-      width: 50,
-      title: <Tooltip title="Tình trạng">TT</Tooltip>,
-      dataIndex: "outOfPill",
-      key: "outOfPill",
-      render: (outOfPill, record) => {
-        return (
-          <Tooltip title={outOfPill ? "Tạm hết thuốc" : "Còn hàng"}>
-            <Tag color={outOfPill ? "red" : "blue"}>
-              {outOfPill ? <CloseCircleOutlined /> : <CheckCircleOutlined />}
-            </Tag>
-          </Tooltip>
-        );
+      title: "Đơn giá",
+      dataIndex: "price",
+      key: "price",
+      width: 150,
+      align: "end",
+      render: (price, record) => {
+        return formatPrice(price);
+      },
+    },
+    {
+      title: "Thành tiền",
+      key: "total",
+      width: 150,
+      align: "end",
+      render: (_, record) => {
+        return formatPrice(record.price * record.quantity);
       },
     },
     {
@@ -190,6 +211,11 @@ const MedicalRecordModal = ({
   ];
 
   const handleAddMedicine = () => {
+    if (medicine.quantity < quantity) {
+      message.error("Số lượng thuốc không đủ");
+      return;
+    }
+
     if (medicine) {
       const addedIdx = medicinesAdded.findIndex(
         (item) => item._id === medicine._id
@@ -219,50 +245,27 @@ const MedicalRecordModal = ({
     form
       .validateFields()
       .then(async (values) => {
-        if (medicalRecord) {
-          const filesNeedAdd = fileList.filter((file) => !file?.isAdded);
-          let files = medicalRecord.files;
-          if (filesNeedAdd.length > 0) {
-            const { fileURLs } = await uploadFiles(filesNeedAdd);
-            files = files.concat(fileURLs);
-          }
-          //update
-          const { medicalRecord: newRecord } = await updateMedicalRecord({
-            ...medicalRecord,
-            result: values.result,
-            files: files,
-            medicines: medicinesAdded,
-            note: values.note,
-            patientId: patientId,
-            doctorId: doctorId,
-            outOfPill,
-          });
-
-          onCreated(newRecord);
-        } else {
-          let files = [];
-          if (fileList.length > 0) {
-            const { fileURLs } = await uploadFiles(fileList);
-            files = fileURLs;
-          }
-
-          const { medicalRecord } = await createMedicalRecord({
-            result: values.result,
-            files: files,
-            medicines: medicinesAdded,
-            note: values.note,
-            patientId: patientId,
-            doctorId: doctorId,
-            outOfPill,
-          });
-
-          onCreated(medicalRecord);
+        // Validate the values
+        if (medicinesAdded.length === 0) {
+          message.error("Vui lòng chọn ít nhất một loại thuốc");
+          return;
         }
 
+        const data = {
+          medicines: medicinesAdded,
+          totalPrice: getTotalPrice,
+          note: values.note,
+          paymentMethod: values.paymentMethod,
+          medicalRecordId,
+          salesId,
+        };
+
+        await createOrder(data);
         notification.success({
           message: "Thành công",
-          description: "Lưu kết quả khám bệnh thành công",
+          description: "Tạo đơn thuốc thành công",
         });
+        onCreated();
       })
       .catch((info) => {
         notification.error({
@@ -271,40 +274,6 @@ const MedicalRecordModal = ({
         });
         console.log("Validate Failed:", info);
       });
-  };
-
-  const props = {
-    multiple: false,
-    onRemove: (file) => {
-      const index = fileList.indexOf(file);
-      const newFileList = fileList.slice();
-      newFileList.splice(index, 1);
-      setFileList(newFileList);
-
-      if (medicalRecord) {
-        const fileIdx = medicalRecord.files.findIndex(
-          (item) => item === file.name
-        );
-
-        if (fileIdx !== -1) {
-          medicalRecord.files.splice(fileIdx, 1);
-        }
-      }
-    },
-    beforeUpload: (file) => {
-      const notShowError =
-        file.type.includes("image") ||
-        file.type.includes("document") ||
-        file.type.includes("pdf");
-      if (!notShowError) {
-        message.error(`${file.name} is not a png file`);
-        return;
-      }
-
-      setFileList([...fileList, file]);
-      return false;
-    },
-    fileList,
   };
 
   const clearsMedicine = () => {
@@ -323,19 +292,25 @@ const MedicalRecordModal = ({
     onCancel();
   };
 
+  const getTotalPrice = useMemo(() => {
+    return medicinesAdded.reduce(
+      (total, item) => total + item.quantity * (item.price || 0),
+      0
+    );
+  }, [medicinesAdded]);
+
   return (
     <Modal
-      title="Điền kết quả khám bệnh"
+      title="Thanh toán hóa đơn thuốc"
       open={visible}
       onOk={handleOK}
       onCancel={handleCancel}
-      okText="Lưu"
+      okText="Thanh toán"
       cancelText="Hủy"
       centered
-      width={600}
-      destroyOnClose
+      width={800}
       styles={{
-        content: { height: "95vh", overflowY: "scroll" },
+        body: { height: "80vh", overflowY: "auto" },
       }}
     >
       <Form
@@ -343,50 +318,11 @@ const MedicalRecordModal = ({
         wrapperCol={{ span: 24 }}
         labelCol={{ span: 4 }}
         labelAlign="left"
+        initialValues={{
+          paymentMethod: "cash",
+        }}
       >
-        <Form.Item
-          label="Kết quả"
-          name="result"
-          rules={[
-            {
-              required: true,
-              message: "Vui lòng nhập kết quả khám bệnh",
-            },
-          ]}
-        >
-          <Input.TextArea required placeholder="Nhập nhập kết quả khám bệnh" />
-        </Form.Item>
-        <Form.Item label="Hình ảnh" name="image">
-          {/* <Upload
-            name="avatar"
-            listType="picture-card"
-            className="avatar-uploader"
-            showUploadList={false}
-            action="https://run.mocky.io/v3/435e224c-44fb-4773-9faf-380c5e6a2188"
-            beforeUpload={beforeUpload}
-            onChange={handleChange}
-          >
-            {imageUrl ? (
-              <img
-                src={imageUrl}
-                alt="avatar"
-                style={{
-                  width: "100%",
-                }}
-              />
-            ) : (
-              uploadButton
-            )}
-          </Upload> */}
-
-          <Upload {...props} fileList={fileList}>
-            <Button icon={<UploadOutlined />}>Đính kèm</Button>
-          </Upload>
-        </Form.Item>
-        <Form.Item label="Lưu ý" name="note">
-          <Input.TextArea placeholder="Lưu ý cho bệnh nhân" />
-        </Form.Item>
-        <Form.Item label="Đơn thuốc">
+        <Form.Item label="Chọn thuốc">
           <Flex justify="space-between">
             <Select
               style={{ width: 270 }}
@@ -396,16 +332,20 @@ const MedicalRecordModal = ({
               value={medicine?._id || ""}
               disabled={!isCreate}
             />
-            <InputNumber
-              style={{ width: 100 }}
-              min={0}
-              placeholder="Số lượng"
-              value={quantity}
-              onChange={(value) => {
-                setQuantity(value);
-                setOutOfPill(value > +medicine?.quantity);
-              }}
-            />
+            <Flex align="center">
+              <Typography.Text>Đơn giá:</Typography.Text>
+              <Typography.Text style={{ width: 80, textAlign: "end" }}>
+                {formatPrice(medicine?.price || 0)}
+              </Typography.Text>
+              <Divider type="vertical" />
+              <Typography.Text>Tối đa:</Typography.Text>
+              <Tooltip title="Đơn vị tính: Viên, lọ, tuyp - ...">
+                <Typography.Text style={{ width: 80, textAlign: "end" }}>
+                  {medicine?.quantity} đơn vị
+                </Typography.Text>
+              </Tooltip>
+            </Flex>
+
             <Tooltip title="Làm mới">
               <Button onClick={clearsMedicine} icon={<ReloadOutlined />} />
             </Tooltip>
@@ -422,12 +362,22 @@ const MedicalRecordModal = ({
               {afterEat ? "Sau khi ăn" : "Trước khi ăn"}
             </Typography.Text>
             <Divider type="vertical" />
-            <Typography.Text>Hết thuốc</Typography.Text>
-            <Checkbox
+            <Typography.Text>Mua:</Typography.Text>
+            <InputNumber
+              style={{ width: 100 }}
               min={0}
-              checked={outOfPill}
-              onChange={() => setOutOfPill((prev) => !prev)}
+              placeholder="Số lượng"
+              value={quantity}
+              onChange={(value) => {
+                setQuantity(value);
+                setOutOfPill(value > +medicine?.quantity);
+              }}
             />
+            <Divider type="vertical" />
+            <Typography.Text>Thành tiền:</Typography.Text>
+            <Typography.Text style={{ width: 100, textAlign: "end" }}>
+              {formatPrice((medicine?.price || 0) * quantity)}
+            </Typography.Text>
             <Button
               style={{ width: 100 }}
               type="primary"
@@ -443,10 +393,45 @@ const MedicalRecordModal = ({
           columns={columns}
           dataSource={medicinesAdded}
           pagination={false}
+          footer={() => (
+            <Flex
+              justify="flex-end"
+              style={{ textAlign: "right", paddingRight: 90 }}
+            >
+              <b>Tổng tiền:</b>{" "}
+              <Typography.Text
+                strong
+                style={{ color: "#123123", width: 120, textAlign: "end" }}
+              >
+                {formatPrice(getTotalPrice)}
+              </Typography.Text>
+            </Flex>
+          )}
         />
+        <SpaceDiv height={10} />
+        <Form.Item
+          label="Ghi chú"
+          name="note"
+          rules={[{ message: "Vui lòng nhập ghi chú" }]}
+        >
+          <Input.TextArea />
+        </Form.Item>
+        <Form.Item
+          label="Thanh toán"
+          name="paymentMethod"
+          valuePropName="value"
+          value
+        >
+          <Radio.Group name="paymentMethod">
+            <Space direction="vertical">
+              <Radio value="cash">Tiền mặt</Radio>
+              <Radio value="banking">Chuyển khoản</Radio>
+            </Space>
+          </Radio.Group>
+        </Form.Item>
       </Form>
     </Modal>
   );
 };
 
-export default MedicalRecordModal;
+export default PrescriptionSalesModal;
