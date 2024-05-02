@@ -3,7 +3,7 @@ import {
   EditOutlined,
   EyeOutlined,
   FilePdfOutlined,
-  MinusOutlined
+  MinusOutlined,
 } from "@ant-design/icons";
 import {
   Button,
@@ -16,37 +16,36 @@ import {
   Table,
   Tag,
   Tooltip,
-  notification
+  notification,
 } from "antd";
 import dayjs from "dayjs";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  getAppointment,
-  updateStatusAppointment
-} from "src/api/appointment";
+import { getAppointment, updateStatusAppointment } from "src/api/appointment";
 import { getListMedicalRecord } from "src/api/medicalRecord";
 import MedicalRecordModal from "src/components/MedicalRecordModal";
 import MedicineModal from "src/components/MedicineModal";
 import Title from "src/components/Title";
 import UserItem from "src/components/UserItem";
 import {
+  ColorsCustom,
   FORMAT_DATE_TIME,
   FORMAT_TIME,
   STATUS_BOOKING,
   STATUS_BOOKING_COLOR,
   STATUS_BOOKING_STR,
+  STATUS_MEDICAL,
   TIME_PHYSICAL_EXAM,
   birthdayAndAge,
   formatedTime,
   getSourceImage,
-  getSpecialtyName
+  getSpecialtyName,
 } from "src/utils";
 
 const { Option } = Select;
 
 const ExaminationDetailPage = () => {
-  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [selectedAppoiment, setSelectedAppoiment] = useState(null);
   const [examinationHistory, setExaminationHistory] = useState([]);
   const [isExaminationModalVisible, setIsExaminationModalVisible] =
     useState(false);
@@ -64,27 +63,27 @@ const ExaminationDetailPage = () => {
     setSelectedRecord(null);
   };
 
+  const initDataAppoiment = useCallback(async () => {
+    try {
+      const { appointment } = await getAppointment(appointmentId);
+      setSelectedAppoiment(appointment);
+    } catch (error) {
+      console.error("Error fetching patients:", error);
+    }
+  }, [appointmentId]);
+
   // Simulating fetching patients from an API
   useEffect(() => {
-    const fetchPatients = async () => {
-      try {
-        const { appointment } = await getAppointment(appointmentId);
-        setSelectedPatient(appointment);
-      } catch (error) {
-        console.error("Error fetching patients:", error);
-      }
-    };
-
-    fetchPatients();
-  }, [appointmentId]);
+    initDataAppoiment();
+  }, [appointmentId, initDataAppoiment]);
 
   useEffect(() => {
     // Simulating fetching examination history for the selected patient
     const fetchExaminationHistory = async () => {
-      if (selectedPatient) {
+      if (selectedAppoiment) {
         try {
           const { medicalRecords } = await getListMedicalRecord({
-            patientId: selectedPatient?.patientId?._id,
+            patientId: selectedAppoiment?.patientId?._id,
           });
           setExaminationHistory(medicalRecords);
         } catch (error) {
@@ -94,7 +93,7 @@ const ExaminationDetailPage = () => {
     };
 
     fetchExaminationHistory();
-  }, [selectedPatient, reloadMedical]);
+  }, [selectedAppoiment, reloadMedical]);
 
   const handleUpdateStatus = () => {
     try {
@@ -201,17 +200,15 @@ const ExaminationDetailPage = () => {
       title: "Hành động",
       key: "action",
       render: (_, record, indx) => {
-        return (
-          indx === 0 && (
-            <Space>
-              <Tooltip title="Chỉnh sửa">
-                <Button
-                  icon={<EditOutlined />}
-                  onClick={() => handleEditRecord(record)}
-                />
-              </Tooltip>
-            </Space>
-          )
+        return record.status === STATUS_MEDICAL.medicined ? null : (
+          <Space>
+            <Tooltip title="Chỉnh sửa">
+              <Button
+                icon={<EditOutlined />}
+                onClick={() => handleEditRecord(record)}
+              />
+            </Tooltip>
+          </Space>
         );
       },
     },
@@ -224,7 +221,7 @@ const ExaminationDetailPage = () => {
   };
 
   const handlePrescribe = (patient) => {
-    setSelectedPatient(patient);
+    setSelectedAppoiment(patient);
     // Handle prescribing logic here
   };
 
@@ -236,8 +233,7 @@ const ExaminationDetailPage = () => {
 
   const handleCreatedMedical = (patient) => {
     setIsExaminationModalVisible(false);
-
-    setReloadMedical(!reloadMedical);
+    initDataAppoiment();
   };
 
   return (
@@ -253,9 +249,26 @@ const ExaminationDetailPage = () => {
               cancelText="Hủy"
               onConfirm={handleUpdateStatus}
             >
-              <Button type="primary" icon={<CheckCircleOutlined />}>
-                Khám xong
-              </Button>
+              <Tooltip
+                title={
+                  !selectedAppoiment?.isExamined
+                    ? "Chưa có kết quả khám"
+                    : "Khám xong"
+                }
+              >
+                <Button
+                  type="primary"
+                  style={{
+                    backgroundColor: selectedAppoiment?.isExamined
+                      ? ColorsCustom.success
+                      : ColorsCustom.disable,
+                  }}
+                  disabled={!selectedAppoiment?.isExamined}
+                  icon={<CheckCircleOutlined />}
+                >
+                  Khám xong
+                </Button>
+              </Tooltip>
             </Popconfirm>
           </Flex>
         }
@@ -264,32 +277,32 @@ const ExaminationDetailPage = () => {
         <Title title="Thông tin bệnh nhân" />
         <Descriptions column={2} bordered>
           <Descriptions.Item label="Bệnh nhân" style={{ fontWeight: "bold" }}>
-            {selectedPatient?.patientId?.fullName}
+            {selectedAppoiment?.patientId?.fullName}
           </Descriptions.Item>
           <Descriptions.Item label="Ngày sinh">
-            {birthdayAndAge(selectedPatient?.patientId?.birthday)}
+            {birthdayAndAge(selectedAppoiment?.patientId?.birthday)}
           </Descriptions.Item>
           <Descriptions.Item label="Điện thoại">
-            {selectedPatient?.patientId?.phone}
+            {selectedAppoiment?.patientId?.phone}
           </Descriptions.Item>
           <Descriptions.Item
             label="Thời gian khám"
             style={{ fontWeight: "bold" }}
           >
-            {selectedPatient?.date} | {selectedPatient?.time} ~{" "}
+            {selectedAppoiment?.date} | {selectedAppoiment?.time} ~{" "}
             {formatedTime(
-              dayjs(selectedPatient?.time, FORMAT_TIME).add(
+              dayjs(selectedAppoiment?.time, FORMAT_TIME).add(
                 TIME_PHYSICAL_EXAM,
                 "minute"
               )
             )}
           </Descriptions.Item>
           <Descriptions.Item label="Chuyên khoa">
-            {getSpecialtyName(selectedPatient?.specialty)}
+            {getSpecialtyName(selectedAppoiment?.specialty)}
           </Descriptions.Item>
           <Descriptions.Item label="Trạng thái">
-            <Tag color={STATUS_BOOKING_COLOR[selectedPatient?.status]}>
-              {STATUS_BOOKING_STR[selectedPatient?.status]}
+            <Tag color={STATUS_BOOKING_COLOR[selectedAppoiment?.status]}>
+              {STATUS_BOOKING_STR[selectedAppoiment?.status]}
             </Tag>
           </Descriptions.Item>
         </Descriptions>
@@ -315,8 +328,9 @@ const ExaminationDetailPage = () => {
       </div>
       <MedicalRecordModal
         visible={isExaminationModalVisible}
-        patientId={selectedPatient?.patientId?._id}
-        doctorId={selectedPatient?.doctorId?._id}
+        patientId={selectedAppoiment?.patientId?._id}
+        doctorId={selectedAppoiment?.doctorId?._id}
+        appointmentId={selectedAppoiment?._id}
         medicalRecord={selectedRecord}
         onCancel={handleCancel}
         onCreated={handleCreatedMedical}

@@ -40,6 +40,7 @@ import {
 import { uploadFile, uploadFiles } from "src/api/upload";
 
 const MedicalRecordModal = ({
+  appointmentId,
   patientId,
   doctorId,
   visible,
@@ -53,7 +54,7 @@ const MedicalRecordModal = ({
   const [quantity, setQuantity] = useState(0);
   const [afterEat, setAfterEat] = useState(true);
   const [outOfPill, setOutOfPill] = useState(false);
-  const [isCreate, setIsCreate] = useState(false);
+  const [isCreate, setIsCreate] = useState(true);
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
   const [optionMedicines, setOptionMedicines] = useState([]);
@@ -69,6 +70,7 @@ const MedicalRecordModal = ({
           label: `${item.name || "Chưa xác định"} - SL: ${item.quantity}`,
           name: item.name,
           quantity: item.quantity,
+          price: item.price,
           value: item._id,
           _id: item._id,
         };
@@ -253,6 +255,7 @@ const MedicalRecordModal = ({
             note: values.note,
             patientId: patientId,
             doctorId: doctorId,
+            appointmentId: appointmentId,
             outOfPill,
           });
 
@@ -309,7 +312,7 @@ const MedicalRecordModal = ({
 
   const clearsMedicine = () => {
     setQuantity(0);
-    setAfterEat(false);
+    setAfterEat(true);
     setOutOfPill(false);
     setMedicine(null);
     setIsCreate(true);

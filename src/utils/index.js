@@ -60,47 +60,47 @@ export const colorOfType = {
 export const STATUS_MEDICAL = {
   examined: "examined",
   medicined: "medicined",
-}
+};
 
 export const STATUS_MEDICAL_STR = {
   examined: "Đã khám",
   medicined: "Đã kê toa",
-}
+};
 
 export const STATUS_MEDICAL_COLOR = {
   examined: "green",
   medicined: "blue",
-}
+};
 
 export const STATUS_ORDER = {
   pending: "pending",
   paid: "paid",
-}
+};
 
 export const STATUS_ORDER_STR = {
   pending: "Chờ xác nhận",
   paid: "Đã thanh toán",
-}
+};
 
 export const STATUS_ORDER_COLOR = {
   pending: "orange",
   paid: "blue",
-}
+};
 
 export const PAYMENT_ORDER = {
   cash: "cash",
   banking: "banking",
-}
+};
 
 export const PAYMENT_ORDER_STR = {
   cash: "Tiền mặt",
   banking: "Chuyển khoản",
-}
+};
 
 export const PAYMENT_ORDER_COLOR = {
   cash: "green",
-  banking: "blue",
-}
+  banking: "orange",
+};
 
 export const birthdayAndAge = (date) => {
   return `${dayjs(date).format(FORMAT_DATE)}- ${dayjs().diff(
@@ -224,6 +224,7 @@ export const FORMAT_DATE_MONGO = "YYYY-MM-DD";
 export const FORMAT_DATE_MONGO_ISO = "YYYY-MM-DDTHH:mm:ssZ";
 export const FORMAT_DATE_TIME = "DD/MM/YYYY HH:mm";
 export const FORMAT_TIME = "HH:mm";
+export const FORMAT_FULL_TIME = "HH:mm:00";
 export const baseURL = "http://localhost:5000";
 
 export const getToday = () => {
@@ -238,8 +239,12 @@ export const formatedDate = (
   return dayjs(date, format).format(formatStr);
 };
 
-export const formatedTime = (date) => {
-  return dayjs(date, FORMAT_TIME).format(FORMAT_TIME);
+export const formatedTime = (
+  date,
+  format = FORMAT_TIME,
+  formatTime = FORMAT_TIME
+) => {
+  return dayjs(date, format).format(formatTime);
 };
 
 export const getSourceImage = (url) => {
@@ -251,9 +256,25 @@ export const getIdxTable = (idx, page = 1, pageSize = 10) => {
 };
 
 export const formatPrice = (price) => {
-  if (!price) price =0;
+  if (!price) price = 0;
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
     currency: "VND",
   }).format(price);
+};
+
+export const ColorsCustom = {
+  success: "#10b981",
+  error: "#ef4444",
+  warning: "#f59e0b",
+  info: "#3b82f6",
+  primary: "#1677ff",
+  secondary: "#8b5cf6",
+  dark: "#1f2937",
+  disable: "#d1d5db",
+};
+
+export const TYPE_CALENDAR = {
+  appointment: "appointment",
+  meeting: "meeting",
 };

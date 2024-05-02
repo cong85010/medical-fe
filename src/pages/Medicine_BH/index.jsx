@@ -32,7 +32,12 @@ import {
   updateMedicine,
 } from "src/api/medicine";
 import Title from "src/components/Title";
-import { FORMAT_DATE_TIME, STATUS_BOOKING, getIdxTable } from "src/utils";
+import {
+  FORMAT_DATE_TIME,
+  STATUS_BOOKING,
+  formatPrice,
+  getIdxTable,
+} from "src/utils";
 import { getUsagesTable } from "src/utils/utilJsx";
 
 const MedicinePage = () => {
@@ -134,7 +139,6 @@ const MedicinePage = () => {
       title: "Tên thuốc",
       dataIndex: "name",
       key: "name",
-      align: "center",
     },
     {
       width: 100,
@@ -144,6 +148,17 @@ const MedicinePage = () => {
       align: "center",
     },
     {
+      width: 100,
+      title: "Giá tiền",
+      dataIndex: "price",
+      key: "price",
+      align: "right",
+      render: function (text) {
+        return formatPrice(text);
+      },
+    },
+    {
+      width: 100,
       title: "Cách dùng",
       dataIndex: "usage",
       key: "usage",
@@ -155,7 +170,6 @@ const MedicinePage = () => {
       title: "Ghi chú",
       dataIndex: "note",
       key: "note",
-      align: "center",
       render: (text) => (
         <Tooltip title={text}>
           <Typography.Paragraph ellipsis={{ rows: 2 }}>
@@ -169,16 +183,16 @@ const MedicinePage = () => {
       title: "Mô tả",
       dataIndex: "description",
       key: "description",
-      align: "center",
       render: (text) => (
         <Tooltip title={text}>
-          <Typography.Paragraph ellipsis={{ rows: 2 }}>
+          <Typography.Paragraph ellipsis={{ rows: 3 }}>
             {text}
           </Typography.Paragraph>
         </Tooltip>
       ),
     },
     {
+      width: 160,
       title: "Ngày cập nhật",
       dataIndex: "updatedAt",
       key: "updatedAt",
@@ -186,6 +200,7 @@ const MedicinePage = () => {
       render: (text) => dayjs(text).format(FORMAT_DATE_TIME),
     },
     {
+      width: 100,
       title: "Hành động",
       dataIndex: "action",
       key: "action",
@@ -327,6 +342,20 @@ const MedicinePage = () => {
             rules={[{ required: true, message: "Vui lòng nhập số lượng" }]}
           >
             <InputNumber min={0} style={{ width: "100%" }} />
+          </Form.Item>
+          <Form.Item
+            label="Giá tiền"
+            name="price"
+            rules={[
+              {
+                type: "number",
+                min: 100,
+                message: "Vui lòng nhập giá tiền lớn hơn 100",
+              },
+              { required: true, message: "Vui lòng nhập giá tiền" },
+            ]}
+          >
+            <InputNumber min={100} style={{ width: "100%" }} />
           </Form.Item>
           <Form.Item
             label="Cách dùng"

@@ -1,6 +1,6 @@
 import { instance } from ".";
 
-const baseURL = "order";
+const baseURL = "/order";
 
 export const createOrder = async (order) => {
   return await instance.post(baseURL, order);
@@ -22,4 +22,7 @@ export const deleteOrder = async (orderId) => {
 };
 export const getStatisticOrder = async () => {
   return await instance.get(`${baseURL}/statistic`);
+};
+export const getListOrderByPatientId = async (patientId) => {
+  return await instance.get(`${baseURL}/patientId/${patientId}`);
 };

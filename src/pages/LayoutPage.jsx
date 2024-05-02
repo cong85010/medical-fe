@@ -16,6 +16,7 @@ import {
   CheckCircleOutlined,
   MedicineBoxOutlined,
   ShoppingOutlined,
+  ShoppingCartOutlined,
 } from "@ant-design/icons";
 import {
   Layout,
@@ -185,9 +186,15 @@ const LayoutPage = () => {
       }
       case TYPE_EMPLOYEE.sales: {
         menuItems.push({
+          key: "orders",
+          icon: <ShoppingCartOutlined />,
+          label: "Đơn hàng",
+          link: "/orders",
+        });
+        menuItems.push({
           key: "sales",
           icon: <ShoppingOutlined />,
-          label: "Bán hàng",
+          label: "Kê toa",
           link: "/sales",
         });
         menuItems.push({

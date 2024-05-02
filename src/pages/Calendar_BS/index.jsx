@@ -8,6 +8,9 @@ import AddMeetingRoomModal from "src/components/AddMeetingRoom";
 import dayjs from "dayjs";
 import {
   Avatar,
+  Badge,
+  Button,
+  Card,
   Descriptions,
   Flex,
   List,
@@ -16,28 +19,40 @@ import {
   Tag,
   Typography,
 } from "antd";
-import { ClockCircleOutlined, UserOutlined } from "@ant-design/icons";
+import {
+  ClockCircleOutlined,
+  EyeOutlined,
+  InfoOutlined,
+  SolutionOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
 import { getListAppointment } from "src/api/appointment";
 import { useSelector } from "react-redux";
 import {
   FORMAT_DATE,
+  FORMAT_DATE_MONGO_ISO,
   FORMAT_TIME,
   STATUS_BOOKING,
   STATUS_BOOKING_COLOR,
   STATUS_BOOKING_STR,
   TIME_PHYSICAL_EXAM,
+  TYPE_CALENDAR,
   formatedDate,
   formatedTime,
   getSpecialtyName,
 } from "src/utils";
+import { getListMeetingRoom } from "src/api/meetingRoom";
 export default function CalendarPage() {
   const [selectedMeeting, setSelectedMeeting] = useState(null);
   const [appointments, setAppointments] = useState([]);
+  const [meetings, setMeetings] = useState([]);
+  const [activeList, setActiveList] = useState(1);
   const [reload, setReload] = useState(false);
   const [filterDate, setFilterDate] = useState({
     startDate: dayjs().startOf("month").format(FORMAT_DATE),
     endDate: dayjs().endOf("month").format(FORMAT_DATE),
   });
+  const [loading, setLoading] = useState(false);
 
   const [visibleAddMeetingRoom, setVisibleAddMeetingRoom] = useState(false);
   const [visibleAppointmentPatient, setVisibleAppointmentPatient] =
@@ -46,13 +61,20 @@ export default function CalendarPage() {
 
   useEffect(() => {
     const initData = async () => {
+      setLoading(true);
       // Replace this with the actual API call to fetch appointments
-      const { appointments } = await getListAppointment({
-        doctorId: user?._id,
-        status: STATUS_BOOKING.booked,
+      // const { appointments } = await getListAppointment({
+      //   doctorId: user?._id,
+      //   status: STATUS_BOOKING.booked,
+      //   ...filterDate,
+      // });
+      // setAppointments(appointments);
+      const { meetings: results } = await getListMeetingRoom({
+        participant: user?._id,
         ...filterDate,
       });
-      setAppointments(appointments);
+      setMeetings(results);
+      setLoading(false);
     };
     if (user?._id) {
       initData();
@@ -67,29 +89,16 @@ export default function CalendarPage() {
   };
 
   const handleDateClick = (selected) => {
+    let startDate = selected.start;
+    let endDate = selected.end;
+
     const meeting = {
-      dateStart: selected.startStr,
-      timeStart: dayjs(selected.start).format("HH:mm"),
-      dateEnd: selected.endStr,
-      timeEnd: dayjs(selected.end).format("HH:mm"),
+      startDate: dayjs(startDate),
+      endDate: dayjs(endDate),
     };
 
     setSelectedMeeting(meeting);
     setVisibleAddMeetingRoom(true);
-    return;
-    const title = prompt("Please enter a new title for your event");
-    const calendarApi = selected.view.calendar;
-    calendarApi.unselect();
-
-    if (title) {
-      calendarApi.addEvent({
-        id: `${selected.dateStr}-${title}`,
-        title,
-        start: selected.startStr,
-        end: selected.endStr,
-        allDay: selected.allDay,
-      });
-    }
   };
 
   const handleEventClick = ({ event }) => {
@@ -102,7 +111,7 @@ export default function CalendarPage() {
   };
 
   const renderEvents = useMemo(() => {
-    return appointments.map((appointment) => {
+    const appointmentEvents = appointments.map((appointment) => {
       return {
         id: appointment._id,
         title: `Khám bệnh:`,
@@ -113,42 +122,108 @@ export default function CalendarPage() {
         time: appointment.time,
         disabled: true,
         appointment,
+        type: TYPE_CALENDAR.appointment,
       };
     });
-  }, [appointments]);
 
-  const appointmentsFromToDay = useMemo(() => {
-    return appointments.filter(
-      (appointment) =>
-        dayjs(appointment.date, FORMAT_DATE).isSame(dayjs(), "day") ||
-        dayjs(appointment.date, FORMAT_DATE).isAfter(dayjs(), "day")
-    );
-  }, [appointments]);
+    const meetingEvents = meetings.map((meeting) => {
+      return {
+        id: meeting._id,
+        title: `Cuộc họp: ${meeting.subject}`,
+        date: dayjs(meeting.startDate).format("YYYY-MM-DD HH:mm"),
+        time: `${formatedTime(
+          meeting.startDate,
+          FORMAT_DATE_MONGO_ISO
+        )} - ${formatedTime(meeting.endDate, FORMAT_DATE_MONGO_ISO)}`,
+        backgroundColor: "green",
+        borderColor: "green",
+        meeting: meeting,
+        type: TYPE_CALENDAR.meeting,
+      };
+    });
+
+    return [...appointmentEvents, ...meetingEvents];
+  }, [appointments, meetings]);
+
+  const filtersMeetings = useMemo(() => {
+    if (activeList === 1)
+      return meetings.filter((meeting) => {
+        return dayjs(meeting.startDate).isSame(dayjs(), "day");
+      });
+    return meetings;
+  }, [meetings, activeList]);
 
   return (
     <div>
       <Flex>
-        <Space direction="vertical" style={{ width: 350 }}>
-          <Typography.Title level={4}>Lịch hẹn</Typography.Title>
-          <List
-            itemLayout="horizontal"
-            dataSource={appointmentsFromToDay}
-            renderItem={(event) => (
-              <List.Item>
-                <List.Item.Meta
-                  avatar={<Avatar icon={<UserOutlined />} />}
-                  title={`KH: ${event.patientId?.fullName}`}
-                  description={
-                    <Space direction="vertical">
-                      <Typography.Text strong>
-                        {`${event.time} - ${event.date}`}
-                      </Typography.Text>
-                    </Space>
-                  }
-                />
-              </List.Item>
-            )}
-          />
+        <Space direction="vertical" style={{ width: 350, paddingRight: 10 }}>
+          <Typography.Title level={4}>Danh sách</Typography.Title>
+          <div style={{ height: "75vh", overflow: "auto" }}>
+            <Space>
+              <Button
+                type={activeList === 0 ? "primary" : "default"}
+                onClick={() => setActiveList(0)}
+              >
+                Tất cả
+              </Button>
+              <Button
+                type={activeList === 1 ? "primary" : "default"}
+                onClick={() => setActiveList(1)}
+              >
+                Hôm nay
+              </Button>
+            </Space>
+            <List
+              style={{ paddingRight: 20 }}
+              itemLayout="horizontal"
+              dataSource={filtersMeetings}
+              renderItem={(meeting) => (
+                <List.Item style={{ width: "100%" }}>
+                  <Card
+                    style={{ width: "100%" }}
+                    styles={{ body: { padding: 10 } }}
+                  >
+                    <Badge.Ribbon
+                      color="orange"
+                      text="Cuộc họp"
+                      style={{ top: -15, right: -18 }}
+                    >
+                      <List.Item.Meta
+                        style={{ width: "100%", padding: 5 }}
+                        title={`${meeting.subject}`}
+                        description={
+                          <Flex justify="space-between">
+                            <Space direction="horizontal" size={"small"}>
+                              <ClockCircleOutlined />
+                              <Typography.Text style={{ fontSize: 12 }}>
+                                {`
+                                 ${formatedTime(
+                                   meeting.startDate,
+                                   FORMAT_DATE_MONGO_ISO,
+                                   FORMAT_DATE
+                                 )}
+                                 -
+                                ${formatedTime(
+                                  meeting.startDate,
+                                  FORMAT_DATE_MONGO_ISO
+                                )} - ${formatedTime(
+                                  meeting.endDate,
+                                  FORMAT_DATE_MONGO_ISO
+                                )}
+                               
+                                `}
+                              </Typography.Text>
+                            </Space>
+                            <Button type="text" icon={<SolutionOutlined />} />
+                          </Flex>
+                        }
+                      />
+                    </Badge.Ribbon>
+                  </Card>
+                </List.Item>
+              )}
+            />
+          </div>
         </Space>
         <div style={{ width: "100%" }}>
           <FullCalendar
@@ -156,11 +231,14 @@ export default function CalendarPage() {
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             themeSystem="bootstrap"
             headerToolbar={{
-              left: "prev,next today",
+              left: "prev,next",
               center: "title",
-              right: "dayGridMonth,timeGridWeek,timeGridDay",
+              right: "today",
             }}
+            buttonText={{ today: "Hiện tại" }}
+            loading={loading}
             initialView="dayGridMonth"
+            locale="vi"
             editable={true}
             selectable={true}
             selectMirror={true}
@@ -182,6 +260,10 @@ export default function CalendarPage() {
         visible={visibleAddMeetingRoom}
         onCancel={onCancel}
         selectedMeeting={selectedMeeting}
+        onAddMeetingRoom={() => {
+          setReload(!reload);
+          setVisibleAddMeetingRoom(false);
+        }}
       />
       <Modal
         title={`Lịch khám bệnh nhân: ${selectedMeeting?.patientId?.fullName}`}
@@ -224,7 +306,7 @@ export default function CalendarPage() {
 
 function renderEventContent(eventInfo) {
   return (
-    <Space>
+    <Space direction="vertical">
       <i>{eventInfo.event.title}</i>
       <b>{eventInfo.event.extendedProps.time}</b>
     </Space>

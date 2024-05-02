@@ -1,15 +1,22 @@
 import React from "react";
-import { Button, Flex, Modal, Table } from "antd";
+import { Alert, Button, Flex, Modal, Table } from "antd";
 import {
   FORMAT_DATE_MONGO,
   FORMAT_DATE_MONGO_ISO,
   FORMAT_DATE_TIME,
+  STATUS_MEDICAL,
   formatedDate,
 } from "src/utils";
 import { getUsagesTable } from "src/utils/utilJsx";
 import { ArrowRightOutlined } from "@ant-design/icons";
 
-const MedicineModal = ({ selected, visible, onCancel, isSales, onMove }) => {
+const MedicineModal = ({
+  selected,
+  visible,
+  onCancel,
+  isSales = false,
+  onMove,
+}) => {
   const columns = [
     {
       title: "Thuốc",
@@ -49,15 +56,19 @@ const MedicineModal = ({ selected, visible, onCancel, isSales, onMove }) => {
     >
       <Table columns={columns} dataSource={dataSource} />
       <Flex justify="flex-end">
-        {isSales && (
-          <Button
-            type="primary"
-            onClick={() => onMove(selected?.medicines)}
-            icon={<ArrowRightOutlined />}
-          >
-            Kê toa theo đơn thuốc
-          </Button>
-        )}
+        {isSales ? (
+          selected?.status === STATUS_MEDICAL.medicined ? (
+            <Alert message="Đơn thuốc đã được kê toa" type="warning" showIcon />
+          ) : (
+            <Button
+              type="primary"
+              onClick={() => onMove(selected?.medicines)}
+              icon={<ArrowRightOutlined />}
+            >
+              Kê toa theo đơn thuốc
+            </Button>
+          )
+        ) : null}
       </Flex>
     </Modal>
   );

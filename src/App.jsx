@@ -19,13 +19,14 @@ import AppointmentPatientPage from "./pages/AppointmentPatient_HC";
 import ProfilePage from "./pages/Profile_ALL/ProfilePage";
 import AppointmentsPage from "./pages/Appointments_BN";
 import ExaminationDetailPage from "./pages/ExaminationDetail_BS";
-import dayjs from 'dayjs'
-import customParseFormat from 'dayjs/plugin/customParseFormat'
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 import MedicinePage from "./pages/Medicine_BH";
 import SalesPage from "./pages/Sales_BH";
 import SalesDetailPage from "./pages/SalesDetail_BH";
+import OrdersPage from "./pages/Orders_BH";
 
-dayjs.extend(customParseFormat)
+dayjs.extend(customParseFormat);
 const PrivateRoute = ({ element, requiredPermission = [] }) => {
   const userType = useSelector((state) => state.auth?.user?.userType);
   const loading = useSelector((state) => state.auth?.loading);
@@ -188,6 +189,15 @@ function App() {
             element={
               <PrivateRoute
                 element={<SalesPage />}
+                requiredPermission={[TYPE_EMPLOYEE.sales]}
+              />
+            }
+          />
+          <Route
+            path="/orders"
+            element={
+              <PrivateRoute
+                element={<OrdersPage />}
                 requiredPermission={[TYPE_EMPLOYEE.sales]}
               />
             }

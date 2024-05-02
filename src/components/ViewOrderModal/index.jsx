@@ -1,68 +1,46 @@
 import {
-  Upload,
-  Modal,
+  Button,
+  Divider,
+  Flex,
   Form,
   Input,
-  InputNumber,
-  Table,
+  Modal,
   Space,
-  Checkbox,
-  Button,
-  Tooltip,
-  Flex,
-  notification,
-  message,
-  Typography,
-  Divider,
-  Select,
-  Popconfirm,
+  Table,
   Tag,
-  Radio,
+  Typography,
 } from "antd";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import dayjs from "dayjs";
+import { useEffect, useState } from "react";
+import { getOrderByMedicalRecordId } from "src/api/order";
 import {
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  DeleteOutlined,
-  EditOutlined,
-  LoadingOutlined,
-  PlusOutlined,
-  ReloadOutlined,
-  UploadOutlined,
-} from "@ant-design/icons";
-import {
+  ColorsCustom,
   FORMAT_DATE_TIME,
   PAYMENT_ORDER_COLOR,
   PAYMENT_ORDER_STR,
-  STATUS_BOOKING,
-  STATUS_BOOKING_COLOR,
-  STATUS_BOOKING_STR,
   STATUS_ORDER_COLOR,
   STATUS_ORDER_STR,
-  beforeUpload,
   formatPrice,
   formatedDate,
-  getBase64,
+  getSpecialtyName,
 } from "src/utils";
-import { getListMedicine } from "src/api/medicine";
-import { DebounceSelect } from "../DeboundSelect";
-import { updateStatusAppointment } from "src/api/appointment";
-import {
-  createMedicalRecord,
-  updateMedicalRecord,
-} from "src/api/medicalRecord";
-import { uploadFile, uploadFiles } from "src/api/upload";
-import SpaceDiv from "../SpaceDiv";
-import { createOrder, getOrderByMedicalRecordId } from "src/api/order";
-import dayjs from "dayjs";
 import { CopyPhonenumber } from "../CopyPhone";
+import SpaceDiv from "../SpaceDiv";
 
-const ViewOrderModal = ({ visible, onCancel, medicalRecordId }) => {
+const ViewOrderModal = ({
+  visible,
+  onCancel,
+  selectedOrder,
+  medicalRecordId,
+}) => {
   const [loading, setLoading] = useState(false);
   const [medicinesAdded, setMedicinesAdded] = useState([]);
-  const [order, setOrder] = useState([]);
+  const [order, setOrder] = useState({});
   const [form] = Form.useForm();
 
+  console.log("====================================");
+  console.log(selectedOrder);
+  console.log("====================================");
   useEffect(() => {
     const fetchOrderByMedicalId = async () => {
       try {
@@ -71,7 +49,6 @@ const ViewOrderModal = ({ visible, onCancel, medicalRecordId }) => {
         );
         form.setFieldsValue({
           ...result,
-          salesFullname: result.salesId.fullName,
           createdAt: dayjs(result.createdAt).format("DD/MM/YYYY HH:mm"),
         });
         setOrder(result);
@@ -80,10 +57,20 @@ const ViewOrderModal = ({ visible, onCancel, medicalRecordId }) => {
       }
     };
 
-    if (visible) {
+    if (visible && !selectedOrder) {
       fetchOrderByMedicalId();
     }
-  }, [form, medicalRecordId, visible]);
+  }, [form, medicalRecordId, selectedOrder, visible]);
+
+  useEffect(() => {
+    if (visible && selectedOrder) {
+      form.setFieldsValue({
+        ...selectedOrder,
+        createdAt: dayjs(selectedOrder.createdAt).format("DD/MM/YYYY HH:mm"),
+      });
+      setOrder(selectedOrder);
+    }
+  }, [form, selectedOrder, visible]);
 
   const columns = [
     {
@@ -134,12 +121,28 @@ const ViewOrderModal = ({ visible, onCancel, medicalRecordId }) => {
     onCancel();
   };
 
+  const handlePrint = function () {
+    window.print();
+  };
+
   return (
     <Modal
       title={`Đơn hàng: ${order?.orderNumber}`}
       open={visible}
       onCancel={handleCancel}
-      footer={null}
+      footer={[
+        <Button key="back" onClick={handleCancel}>
+          Đóng
+        </Button>,
+        <Button
+          key="submit"
+          type="primary"
+          onClick={handlePrint}
+          loading={loading}
+        >
+          In hoá đơn
+        </Button>,
+      ]}
       okText="Thanh toán"
       cancelText="Hủy"
       centered
@@ -156,8 +159,8 @@ const ViewOrderModal = ({ visible, onCancel, medicalRecordId }) => {
         disabled
       >
         <Flex gap={20} align="center">
-          <Flex align="center">
-            <Typography.Text strong>Ngày tạo:</Typography.Text>
+          <Flex align="center" style={{ width: "45%" }}>
+            <Typography.Text strong>Ngày mua:</Typography.Text>
             <SpaceDiv width={10} />
             <Typography.Text>
               {formatedDate(
@@ -168,30 +171,84 @@ const ViewOrderModal = ({ visible, onCancel, medicalRecordId }) => {
             </Typography.Text>
           </Flex>
           <Divider type="vertical" />
-          <Flex align="center">
-            <Typography.Text strong>Người tạo:</Typography.Text>
+          {order?.medicalRecordId?.patientId ? (
+            <Flex align="center">
+              <Typography.Text strong>Bệnh nhân:</Typography.Text>
+              <SpaceDiv width={10} />
+              <Typography.Text>
+                {order?.medicalRecordId?.patientId?.fullName}
+              </Typography.Text>
+              <Divider type="vertical" />
+              <SpaceDiv width={10} />
+              <Typography.Text>
+                <CopyPhonenumber
+                  phone={order?.medicalRecordId?.patientId?.phone}
+                />
+              </Typography.Text>
+            </Flex>
+          ) : order?.patientId ? (
+            <Flex align="center">
+              <Typography.Text strong>Bệnh nhân:</Typography.Text>
+              <SpaceDiv width={10} />
+              <Typography.Text>{order?.patientId?.fullName}</Typography.Text>
+              <Divider type="vertical" />
+              <SpaceDiv width={10} />
+              <Typography.Text>
+                <CopyPhonenumber phone={order?.patientId?.phone} />
+              </Typography.Text>
+            </Flex>
+          ) : null}
+        </Flex>
+        <SpaceDiv height={20} />
+        <Flex gap={20} align="center">
+          <Flex align="center" style={{ width: "45%" }}>
+            <Typography.Text strong>Thu ngân:</Typography.Text>
             <SpaceDiv width={10} />
             <Typography.Text>{order?.salesId?.fullName}</Typography.Text>
             <Divider type="vertical" />
-            <Typography.Text strong>Điện thoại:</Typography.Text>
-            <SpaceDiv width={10} />
             <Typography.Text>
               <CopyPhonenumber phone={order?.salesId?.phone} />
             </Typography.Text>
           </Flex>
+          <Divider type="vertical" />
+          {order?.medicalRecordId?.doctorId && (
+            <Flex align="center">
+              <Typography.Text strong>Bác sĩ:</Typography.Text>
+              <SpaceDiv width={10} />
+              <Typography.Text>
+                {order?.medicalRecordId?.doctorId?.fullName}
+              </Typography.Text>
+              <Divider type="vertical" />
+              <SpaceDiv width={10} />
+              <Typography.Text>
+                {getSpecialtyName(order?.medicalRecordId?.doctorId?.specialty)}
+              </Typography.Text>
+            </Flex>
+          )}
         </Flex>
+
         <SpaceDiv height={20} />
         <Table
+          className="table-view-order"
           rowKey="_id"
           columns={columns}
           dataSource={order?.medicines}
           pagination={false}
           footer={() => (
-            <Flex justify="flex-end" style={{ textAlign: "right" }}>
+            <Flex
+              justify="flex-end"
+              align="center"
+              style={{ textAlign: "right" }}
+            >
               <b>Tổng tiền:</b>{" "}
               <Typography.Text
-                strong
-                style={{ color: "#123123", width: 120, textAlign: "end" }}
+                style={{
+                  color: ColorsCustom.primary,
+                  width: 120,
+                  textAlign: "end",
+                  fontWeight: "bold",
+                  fontSize: 18,
+                }}
               >
                 {formatPrice(order?.totalPrice)}
               </Typography.Text>
@@ -199,17 +256,17 @@ const ViewOrderModal = ({ visible, onCancel, medicalRecordId }) => {
           )}
         />
         <SpaceDiv height={20} />
-        <Form.Item
-          label="Ghi chú"
-          name="note"
-          rules={[{ message: "Vui lòng nhập ghi chú" }]}
-        >
-          <Input.TextArea />
-        </Form.Item>
+        <Flex gap={10} style={{ minHeight: 80 }}>
+          <Typography.Text strong>Ghi chú:</Typography.Text>
+          <Typography.Paragraph>{order.note || "Không"}</Typography.Paragraph>
+        </Flex>
         <Flex>
           <Typography.Text strong>Thanh toán:</Typography.Text>
           <SpaceDiv width={10} />
-          <Tag style={{fontSize: 17}} color={PAYMENT_ORDER_COLOR[order?.paymentMethod]}>
+          <Tag
+            style={{ fontSize: 17 }}
+            color={PAYMENT_ORDER_COLOR[order?.paymentMethod]}
+          >
             {PAYMENT_ORDER_STR[order?.paymentMethod]}
           </Tag>
         </Flex>
@@ -217,7 +274,10 @@ const ViewOrderModal = ({ visible, onCancel, medicalRecordId }) => {
         <Flex>
           <Typography.Text strong>Trạng thái:</Typography.Text>
           <SpaceDiv width={10} />
-          <Tag style={{fontSize: 17}}  color={STATUS_ORDER_COLOR[order?.status]}>
+          <Tag
+            style={{ fontSize: 17 }}
+            color={STATUS_ORDER_COLOR[order?.status]}
+          >
             {STATUS_ORDER_STR[order?.status]}
           </Tag>
         </Flex>

@@ -1,68 +1,60 @@
 import {
-  Upload,
-  Modal,
+  DeleteOutlined,
+  EditOutlined,
+  ReloadOutlined,
+} from "@ant-design/icons";
+import {
+  Button,
+  Checkbox,
+  Divider,
+  Flex,
   Form,
   Input,
   InputNumber,
-  Table,
-  Space,
-  Checkbox,
-  Button,
-  Tooltip,
-  Flex,
-  notification,
-  message,
-  Typography,
-  Divider,
-  Select,
+  Modal,
   Popconfirm,
-  Tag,
   Radio,
+  Select,
+  Space,
+  Table,
+  Tooltip,
+  Typography,
+  message,
+  notification,
 } from "antd";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  DeleteOutlined,
-  EditOutlined,
-  LoadingOutlined,
-  PlusOutlined,
-  ReloadOutlined,
-  UploadOutlined,
-} from "@ant-design/icons";
-import {
-  STATUS_BOOKING,
-  beforeUpload,
-  formatPrice,
-  getBase64,
-} from "src/utils";
 import { getListMedicine } from "src/api/medicine";
-import { DebounceSelect } from "../DeboundSelect";
-import { updateStatusAppointment } from "src/api/appointment";
-import {
-  createMedicalRecord,
-  updateMedicalRecord,
-} from "src/api/medicalRecord";
-import { uploadFile, uploadFiles } from "src/api/upload";
-import SpaceDiv from "../SpaceDiv";
 import { createOrder } from "src/api/order";
+import {
+  ColorsCustom,
+  FORMAT_DATE,
+  STATUS_ORDER,
+  formatPrice,
+} from "src/utils";
+import SpaceDiv from "../SpaceDiv";
+import { getUsers } from "src/api/user";
+import { DebounceSelect } from "../DeboundSelect";
+import dayjs from "dayjs";
 
 const PrescriptionSalesModal = ({
   medicalRecordId,
   salesId,
+  patientId,
   visible,
   onCreated,
   onCancel,
   medicalRecord,
   medicinesImport,
+  showPatients = false,
 }) => {
   const [loading, setLoading] = useState(false);
   const [medicinesAdded, setMedicinesAdded] = useState([]);
+  const [patient, setPatient] = useState(null);
   const [medicine, setMedicine] = useState(null);
   const [quantity, setQuantity] = useState(0);
   const [afterEat, setAfterEat] = useState(true);
   const [outOfPill, setOutOfPill] = useState(false);
-  const [isCreate, setIsCreate] = useState(false);
+  const [isCreate, setIsCreate] = useState(true);
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
   const [optionMedicines, setOptionMedicines] = useState([]);
@@ -102,7 +94,9 @@ const PrescriptionSalesModal = ({
     if (visible) {
       fetchMedicienList();
       if (medicalRecord) {
-        form.setFieldsValue(medicalRecord);
+        form.setFieldsValue({
+          paymentMethod: medicalRecord?.paymentMethod || "cash",
+        });
         setMedicinesAdded(medicalRecord.medicines);
         setFileList(
           medicalRecord.files.map((file) => {
@@ -251,6 +245,11 @@ const PrescriptionSalesModal = ({
           return;
         }
 
+        if (!values.paymentMethod) {
+          message.error("Chọn phương thức thanh toán");
+          return;
+        }
+
         const data = {
           medicines: medicinesAdded,
           totalPrice: getTotalPrice,
@@ -258,6 +257,8 @@ const PrescriptionSalesModal = ({
           paymentMethod: values.paymentMethod,
           medicalRecordId,
           salesId,
+          patientId: medicalRecord?.patientId || patientId || patient?.value,
+          status: STATUS_ORDER.paid,
         };
 
         await createOrder(data);
@@ -265,6 +266,7 @@ const PrescriptionSalesModal = ({
           message: "Thành công",
           description: "Tạo đơn thuốc thành công",
         });
+        handleCancel();
         onCreated();
       })
       .catch((info) => {
@@ -278,7 +280,7 @@ const PrescriptionSalesModal = ({
 
   const clearsMedicine = () => {
     setQuantity(0);
-    setAfterEat(false);
+    setAfterEat(true);
     setOutOfPill(false);
     setMedicine(null);
     setIsCreate(true);
@@ -298,6 +300,26 @@ const PrescriptionSalesModal = ({
       0
     );
   }, [medicinesAdded]);
+
+  async function fetchPatientList(searchKey = "") {
+    try {
+      const result = await getUsers({ searchKey, userType: "user", limit: 10 });
+
+      return result?.users?.map((item) => {
+        return {
+          label: `${item.fullName || "Chưa xác định"} - ${item.phone} - ${dayjs(
+            item.birthday
+          ).format(FORMAT_DATE)}`,
+          value: item._id,
+          _id: item._id,
+        };
+      });
+    } catch (error) {
+      console.log("====================================");
+      console.log(error);
+      console.log("====================================");
+    }
+  }
 
   return (
     <Modal
@@ -322,6 +344,22 @@ const PrescriptionSalesModal = ({
           paymentMethod: "cash",
         }}
       >
+        {showPatients && (
+          <Form.Item label="Bệnh nhân" name="patientId">
+            <DebounceSelect
+              allowClear
+              selectId="patientId"
+              placeholder="Chọn bệnh nhân"
+              fetchOptions={fetchPatientList}
+              initValue={patient?._id}
+              onChange={(selected) => {
+                console.log(selected);
+                setPatient(selected);
+              }}
+              style={{ width: "100%" }}
+            />
+          </Form.Item>
+        )}
         <Form.Item label="Chọn thuốc">
           <Flex justify="space-between">
             <Select
@@ -333,14 +371,22 @@ const PrescriptionSalesModal = ({
               disabled={!isCreate}
             />
             <Flex align="center">
-              <Typography.Text>Đơn giá:</Typography.Text>
-              <Typography.Text style={{ width: 80, textAlign: "end" }}>
-                {formatPrice(medicine?.price || 0)}
-              </Typography.Text>
+              <Typography.Text>Mua:</Typography.Text>
+              <InputNumber
+                style={{ width: 100, marginLeft: 10 }}
+                min={0}
+                placeholder="Số lượng"
+                value={quantity}
+                onChange={(value) => {
+                  setQuantity(value);
+                  setOutOfPill(value > +medicine?.quantity);
+                }}
+              />
+
               <Divider type="vertical" />
               <Typography.Text>Tối đa:</Typography.Text>
               <Tooltip title="Đơn vị tính: Viên, lọ, tuyp - ...">
-                <Typography.Text style={{ width: 80, textAlign: "end" }}>
+                <Typography.Text strong style={{ width: 80, textAlign: "end" }}>
                   {medicine?.quantity} đơn vị
                 </Typography.Text>
               </Tooltip>
@@ -362,20 +408,27 @@ const PrescriptionSalesModal = ({
               {afterEat ? "Sau khi ăn" : "Trước khi ăn"}
             </Typography.Text>
             <Divider type="vertical" />
-            <Typography.Text>Mua:</Typography.Text>
-            <InputNumber
-              style={{ width: 100 }}
-              min={0}
-              placeholder="Số lượng"
-              value={quantity}
-              onChange={(value) => {
-                setQuantity(value);
-                setOutOfPill(value > +medicine?.quantity);
+            <Typography.Text>Đơn giá:</Typography.Text>
+            <Typography.Text
+              style={{
+                width: 80,
+                textAlign: "end",
+                color: ColorsCustom.primary,
+                fontWeight: "500",
               }}
-            />
+            >
+              {formatPrice(medicine?.price || 0)}
+            </Typography.Text>
             <Divider type="vertical" />
             <Typography.Text>Thành tiền:</Typography.Text>
-            <Typography.Text style={{ width: 100, textAlign: "end" }}>
+            <Typography.Text
+              style={{
+                width: 100,
+                textAlign: "end",
+                color: ColorsCustom.primary,
+                fontWeight: "bold",
+              }}
+            >
               {formatPrice((medicine?.price || 0) * quantity)}
             </Typography.Text>
             <Button
@@ -393,15 +446,25 @@ const PrescriptionSalesModal = ({
           columns={columns}
           dataSource={medicinesAdded}
           pagination={false}
+          scroll={{
+            x: 300,
+            y: 300,
+          }}
           footer={() => (
             <Flex
               justify="flex-end"
-              style={{ textAlign: "right", paddingRight: 90 }}
+              align="center"
+              style={{ textAlign: "right", paddingRight: 70 }}
             >
               <b>Tổng tiền:</b>{" "}
               <Typography.Text
-                strong
-                style={{ color: "#123123", width: 120, textAlign: "end" }}
+                style={{
+                  color: ColorsCustom.primary,
+                  width: 120,
+                  textAlign: "end",
+                  fontWeight: "bold",
+                  fontSize: 18,
+                }}
               >
                 {formatPrice(getTotalPrice)}
               </Typography.Text>
@@ -409,18 +472,16 @@ const PrescriptionSalesModal = ({
           )}
         />
         <SpaceDiv height={10} />
-        <Form.Item
-          label="Ghi chú"
-          name="note"
-          rules={[{ message: "Vui lòng nhập ghi chú" }]}
-        >
+        <Form.Item label="Ghi chú" name="note">
           <Input.TextArea />
         </Form.Item>
         <Form.Item
           label="Thanh toán"
           name="paymentMethod"
           valuePropName="value"
-          value
+          rules={[
+            { required: true, message: "Vui lòng chọn phương thức thanh toán" },
+          ]}
         >
           <Radio.Group name="paymentMethod">
             <Space direction="vertical">

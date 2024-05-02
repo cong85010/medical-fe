@@ -11,6 +11,7 @@ function DebounceSelectMemo({
   selectId = null,
   initValue,
   onChange,
+  allowClear = false,
   ...props
 }) {
   const [fetching, setFetching] = useState(false);
@@ -55,6 +56,7 @@ function DebounceSelectMemo({
     if (onChange) {
       const selected = options.find((option) => option.value === value);
       if (selected) {
+        console.log(selected);
         onChange(selected);
       }
     }
@@ -63,6 +65,12 @@ function DebounceSelectMemo({
   return (
     <Flex gap={10}>
       <Select
+        allowClear={allowClear}
+        onClear={() => {
+          setOptions([]);
+          onChange("");
+          debounceFetcher("");
+        }}
         id={selectId}
         showSearch
         filterOption={false}

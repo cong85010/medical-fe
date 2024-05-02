@@ -26,6 +26,7 @@ import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import { getAppointment, updateStatusAppointment } from "src/api/appointment";
 import { getListMedicalRecord } from "src/api/medicalRecord";
+import { getListOrder, getListOrderByPatientId } from "src/api/order";
 import MedicalRecordModal from "src/components/MedicalRecordModal";
 import MedicineModal from "src/components/MedicineModal";
 import PrescriptionSalesModal from "src/components/PrescriptionSalesModal";
@@ -33,13 +34,18 @@ import Title from "src/components/Title";
 import UserItem from "src/components/UserItem";
 import ViewOrderModal from "src/components/ViewOrderModal";
 import {
+  ColorsCustom,
   FORMAT_DATE_TIME,
   FORMAT_TIME,
+  PAYMENT_ORDER_COLOR,
+  PAYMENT_ORDER_STR,
   STATUS_BOOKING,
   STATUS_BOOKING_COLOR,
   STATUS_BOOKING_STR,
   STATUS_MEDICAL_COLOR,
   STATUS_MEDICAL_STR,
+  STATUS_ORDER_COLOR,
+  STATUS_ORDER_STR,
   TIME_PHYSICAL_EXAM,
   birthdayAndAge,
   formatedTime,
@@ -50,10 +56,13 @@ import {
 const SalesDetailPage = () => {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [examinationHistory, setExaminationHistory] = useState([]);
+  const [ordersHistory, setOrdersHistory] = useState([]);
+
   const [isExaminationModalVisible, setIsExaminationModalVisible] =
     useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   const [reloadMedical, setReloadMedical] = useState(false);
   const [isShowViewOrder, setisShowViewOrder] = useState(false);
@@ -100,41 +109,37 @@ const SalesDetailPage = () => {
     fetchExaminationHistory();
   }, [selectedPatient, reloadMedical]);
 
+  useEffect(() => {
+    // Simulating fetching examination history for the selected patient
+    const fetchOrdersHistory = async () => {
+      if (selectedPatient) {
+        try {
+          const { orders } = await getListOrderByPatientId(
+            selectedPatient?.patientId?._id
+          );
+          setOrdersHistory(orders);
+        } catch (error) {
+          console.error("Error fetching examination history:", error);
+        }
+      }
+    };
+
+    fetchOrdersHistory();
+  }, [selectedPatient, reloadMedical]);
+
   const handleUpdateStatus = () => {
     try {
       updateStatusAppointment({
         appointmentId,
-        status: STATUS_BOOKING.finished,
+        status: STATUS_BOOKING.medicined,
       });
       notification.success({
         message: "Thành công",
       });
-      navigate("/examination");
+      navigate("/sales");
     } catch (error) {
       console.error(error);
     }
-  };
-
-  const getTypeFile = (url) => {
-    const urlBE = getSourceImage(url);
-    if (!url) return "";
-
-    if (url.includes("pdf") || url.includes("docx")) {
-      return (
-        <Tooltip title="Tài liệu">
-          <Button icon={<FilePdfOutlined />} href={urlBE} target="_blank" />
-        </Tooltip>
-      );
-    }
-    return (
-      <Image
-        src={urlBE}
-        alt="hinhanh"
-        width={50}
-        height={50}
-        style={{ borderRadius: 10, objectFit: "cover" }}
-      />
-    );
   };
 
   const columns = [
@@ -197,7 +202,7 @@ const SalesDetailPage = () => {
     },
     {
       width: 150,
-      title: "Hành động",
+      title: "Đơn hàng",
       key: "action",
       align: "center",
       render: (_, record, indx) => {
@@ -215,6 +220,87 @@ const SalesDetailPage = () => {
               onClick={() => handleViewOrder(record)}
             />
           </Tooltip>
+        );
+      },
+    },
+  ];
+
+  const columnsOrders = [
+    {
+      title: "Mã đơn hàng",
+      dataIndex: "orderNumber",
+      key: "orderNumber",
+      render: (orderNumber, record) => (
+        <Button
+          type="link"
+          onClick={() => {
+            setSelectedOrder(record);
+            setisShowViewOrder(true);
+          }}
+        >
+          {orderNumber}
+        </Button>
+      ),
+    },
+    {
+      title: "Ngày tạo",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      width: 160,
+      render: (createdAt) => dayjs(createdAt).format(FORMAT_DATE_TIME),
+    },
+    {
+      title: "Thu ngân",
+      dataIndex: "salesId",
+      key: "salesId",
+      render: (salesId) => {
+        return <UserItem user={salesId} />;
+      },
+    },
+    {
+      title: "Tổng tiền",
+      dataIndex: "totalPrice",
+      key: "totalPrice",
+      render: (totalPrice) => <span>{totalPrice.toLocaleString()} VNĐ</span>,
+    },
+    {
+      title: "Phương thức thanh toán",
+      dataIndex: "paymentMethod",
+      key: "paymentMethod",
+      render: (paymentMethod) => (
+        <Tag
+          style={{ fontSize: 17 }}
+          color={PAYMENT_ORDER_COLOR[paymentMethod]}
+        >
+          {PAYMENT_ORDER_STR[paymentMethod]}
+        </Tag>
+      ),
+    },
+    {
+      title: "Trạng thái",
+      dataIndex: "status",
+      key: "status",
+      render: (status) => (
+        <Tag style={{ fontSize: 17 }} color={STATUS_ORDER_COLOR[status]}>
+          {STATUS_ORDER_STR[status]}
+        </Tag>
+      ),
+    },
+    {
+      title: "Hóa đơn",
+      dataIndex: "medicines",
+      key: "medicines",
+      render: (medicines, record) => {
+        return (
+          <Space>
+            <Button
+              icon={<EyeOutlined />}
+              onClick={() => {
+                setSelectedOrder(record);
+                setisShowViewOrder(true);
+              }}
+            />
+          </Space>
         );
       },
     },
@@ -248,7 +334,6 @@ const SalesDetailPage = () => {
     setReloadMedical(!reloadMedical);
   };
 
-
   // TODO: Bổ sung lịch sử đơn hàng ???
   return (
     <div>
@@ -258,12 +343,16 @@ const SalesDetailPage = () => {
         right={
           <Flex justify="end" style={{ flex: "1 1" }}>
             <Popconfirm
-              title="Xác nhận khám xong"
+              title="Xác nhận kê toa xong"
               okText="Xác nhận"
               cancelText="Hủy"
               onConfirm={handleUpdateStatus}
             >
-              <Button type="primary" icon={<CheckCircleOutlined />}>
+              <Button
+                type="primary"
+                style={{ backgroundColor: ColorsCustom.success }}
+                icon={<CheckCircleOutlined />}
+              >
                 Kê toa xong
               </Button>
             </Popconfirm>
@@ -311,22 +400,38 @@ const SalesDetailPage = () => {
           styleContainer={{
             marginTop: 20,
           }}
+        />
+
+        <Table dataSource={examinationHistory} columns={columns} />
+      </div>
+      <div>
+        <Title
+          title={"Lịch sử đơn hàng"}
+          justify="space-between"
+          styleContainer={{
+            marginTop: 20,
+          }}
           right={
             <Button
               type="primary"
               onClick={() => setIsExaminationModalVisible(true)}
             >
-              Kê toa theo đơn thuốc
+              Bán thuốc
             </Button>
           }
         />
 
-        <Table dataSource={examinationHistory} columns={columns} />
+        <Table
+          rowKey="_id"
+          dataSource={ordersHistory}
+          columns={columnsOrders}
+        />
       </div>
       <PrescriptionSalesModal
         visible={isExaminationModalVisible}
         medicalRecordId={selectedRecord?._id}
         salesId={user._id}
+        patientId={selectedPatient?.patientId?._id}
         medicalRecord={selectedRecord}
         medicinesImported={selectedRecord?.medicines}
         onCancel={handleCancel}
@@ -335,7 +440,11 @@ const SalesDetailPage = () => {
       <ViewOrderModal
         visible={isShowViewOrder}
         medicalRecordId={selectedRecord?._id}
-        onCancel={() => setisShowViewOrder(false)}
+        selectedOrder={selectedOrder}
+        onCancel={() => {
+          setisShowViewOrder(false);
+          setSelectedOrder(null);
+        }}
       />
       <MedicineModal
         isSales
