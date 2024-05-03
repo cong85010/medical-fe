@@ -176,7 +176,7 @@ export default function UsersPage() {
     },
     {
       title: "Hành động",
-      fixed: 'right',
+      fixed: "right",
       width: 130,
       ellipsis: true,
       key: "action",
@@ -265,7 +265,6 @@ export default function UsersPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-
         setLoading(true);
         const result = await getUsers({
           searchKey: keyword,
@@ -339,6 +338,8 @@ export default function UsersPage() {
         </Button>
       </Flex>
       <Table
+        rowKey={"_id"}
+        loading={loading}
         columns={columns}
         dataSource={users}
         pagination={pagination}
@@ -360,6 +361,9 @@ export default function UsersPage() {
           labelCol={{ span: 6 }}
           wrapperCol={{ span: 16 }}
           style={{ marginTop: 20 }}
+          initialValues={{
+            gender: 'male',
+          }}
         >
           <Form.Item
             label="Họ tên"

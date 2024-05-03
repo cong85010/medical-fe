@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Modal,
   Form,
@@ -18,13 +18,19 @@ import {
   FORMAT_DATE,
   FORMAT_DATE_TIME,
   FORMAT_TIME,
+  TYPE_EMPLOYEE,
   formatedTime,
 } from "src/utils";
 import { UploadOutlined } from "@ant-design/icons";
 import { createMeetingRoom } from "src/api/meetingRoom";
 import { uploadFiles } from "src/api/upload";
 import { useSelector } from "react-redux";
+import { DebounceSelect } from "../DeboundSelect";
+import { getUsers } from "src/api/user";
 const { Option } = Select;
+
+let timeout;
+let currentValue;
 
 const range = (start, end, skips = []) => {
   const result = [];
@@ -37,6 +43,12 @@ const range = (start, end, skips = []) => {
   return result;
 };
 
+const optionsRoom = [
+  { value: "room1", label: "Room 1" },
+  { value: "room2", label: "Room 2" },
+  { value: "room3", label: "Room 3" },
+];
+
 const AddMeetingRoomModal = ({
   visible,
   selectedMeeting = {},
@@ -44,9 +56,11 @@ const AddMeetingRoomModal = ({
   onAddMeetingRoom,
 }) => {
   const [form] = Form.useForm();
-  const [meetingType, setMeetingType] = useState("offline");
   const [fileList, setFileList] = useState([]);
+  const [doctors, setDoctors] = useState([]);
   const user = useSelector((state) => state.auth.user);
+  const [options, setOptions] = useState([]);
+
   const handleOk = () => {
     form.validateFields().then(async (values) => {
       // Validate that the end time is after the start time
@@ -110,6 +124,55 @@ const AddMeetingRoomModal = ({
     onCancel();
   };
 
+  const fetchDoctorList = useCallback(
+    (value = "") => {
+      try {
+        if (timeout) {
+          clearTimeout(timeout);
+          timeout = null;
+        }
+        currentValue = value;
+
+        const fetchData = async () => {
+          const result = await getUsers({
+            searchKey: currentValue,
+            userType: TYPE_EMPLOYEE.doctor,
+            limit: 10,
+          });
+
+          const users = result?.users?.filter((item) => item._id !== user._id);
+
+          const list = users?.map((item) => {
+            return {
+              label: `${item.fullName || "Chưa xác định"} - ${
+                item.phone
+              } - ${dayjs(item.birthday).format(FORMAT_DATE)}`,
+              value: item._id,
+            };
+          });
+          setOptions(list);
+        };
+
+        if (value !== undefined) {
+          timeout = setTimeout(fetchData, 300);
+        } else {
+          setOptions([]);
+        }
+      } catch (error) {
+        console.log("====================================");
+        console.log(error);
+        console.log("====================================");
+      }
+    },
+    [user._id]
+  );
+
+  useEffect(() => {
+    if (visible) {
+      fetchDoctorList();
+    }
+  }, [fetchDoctorList, visible]);
+
   useEffect(() => {
     if (visible) {
       form.setFieldsValue({
@@ -117,8 +180,6 @@ const AddMeetingRoomModal = ({
       });
     }
   }, [form, visible, selectedMeeting]);
-
-  if (!visible) return <></>;
 
   const disabledDate = (current) => {
     // Can not select days before today and today
@@ -168,21 +229,30 @@ const AddMeetingRoomModal = ({
     fileList,
   };
 
-  const optionsRoom = [
-    { value: "room1", label: "Room 1" },
-    { value: "room2", label: "Room 2" },
-    { value: "room3", label: "Room 3" },
-  ];
+  const onChangeParticipants = (value) => {
+    setDoctors(value);
+  };
+
+  if (!visible) return <></>;
 
   return (
     <Modal
       title="Tạo lịch họp"
+      centered
       open={visible}
       onOk={handleOk}
       okText="Tạo cuộc họp"
       cancelText="Hủy"
       onCancel={handleCancel}
       destroyOnClose
+      styles={{
+        body: {
+          height: "80vh",
+          paddingRight: 5,
+          overflowX: "hidden",
+          overflowY: "auto",
+        },
+      }}
     >
       <Form
         form={form}
@@ -266,10 +336,17 @@ const AddMeetingRoomModal = ({
           label="Người tham gia"
           rules={[{ required: true, message: "Chọn người tham gia" }]}
         >
-          <Select mode="tags" placeholder="Người tham gia">
-            <Option value="participant1">Participant 1</Option>
-            <Option value="participant2">Participant 2</Option>
-          </Select>
+          <Select
+            allowClear
+            selectId="participants"
+            placeholder="Chọn người tham gia"
+            onSearch={fetchDoctorList}
+            value={doctors}
+            options={options}
+            onChange={onChangeParticipants}
+            style={{ width: "100%" }}
+            mode="multiple"
+          />
         </Form.Item>
         <Form.Item name="files" label="Đính kèm">
           <Upload {...props} fileList={fileList}>

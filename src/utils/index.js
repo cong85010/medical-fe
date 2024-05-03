@@ -102,6 +102,24 @@ export const PAYMENT_ORDER_COLOR = {
   banking: "orange",
 };
 
+export const STATUS_MEETING = {
+  pending: "pending",
+  accepted: "accepted",
+  rejected: "rejected",
+};
+
+export const STATUS_MEETING_STR = {
+  pending: "Chờ xác nhận",
+  accepted: "Đã chấp nhận",
+  rejected: "Đã từ chối",
+};
+
+export const STATUS_MEETING_COLOR = {
+  pending: "orange",
+  accepted: "green",
+  rejected: "red",
+};
+
 export const birthdayAndAge = (date) => {
   return `${dayjs(date).format(FORMAT_DATE)}- ${dayjs().diff(
     date,
@@ -224,7 +242,7 @@ export const FORMAT_DATE_MONGO = "YYYY-MM-DD";
 export const FORMAT_DATE_MONGO_ISO = "YYYY-MM-DDTHH:mm:ssZ";
 export const FORMAT_DATE_TIME = "DD/MM/YYYY HH:mm";
 export const FORMAT_TIME = "HH:mm";
-export const FORMAT_FULL_TIME = "HH:mm:00";
+export const FORMAT_FULL_TIME = "HH:mm:ss";
 export const baseURL = "http://localhost:5000";
 
 export const getToday = () => {
@@ -278,3 +296,5 @@ export const TYPE_CALENDAR = {
   appointment: "appointment",
   meeting: "meeting",
 };
+
+

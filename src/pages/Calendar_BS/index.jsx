@@ -1,13 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
-import FullCalendar from "@fullcalendar/react";
+import { ClockCircleOutlined, SolutionOutlined } from "@ant-design/icons";
 import dayGridPlugin from "@fullcalendar/daygrid";
-import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import listPlugin from "@fullcalendar/list";
-import AddMeetingRoomModal from "src/components/AddMeetingRoom";
-import dayjs from "dayjs";
+import FullCalendar from "@fullcalendar/react";
+import timeGridPlugin from "@fullcalendar/timegrid";
 import {
-  Avatar,
   Badge,
   Button,
   Card,
@@ -19,32 +15,24 @@ import {
   Tag,
   Typography,
 } from "antd";
-import {
-  ClockCircleOutlined,
-  EyeOutlined,
-  InfoOutlined,
-  SolutionOutlined,
-  UserOutlined,
-} from "@ant-design/icons";
-import { getListAppointment } from "src/api/appointment";
+import dayjs from "dayjs";
+import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
+import { getListMeetingRoom } from "src/api/meetingRoom";
+import AddMeetingRoomModal from "src/components/AddMeetingRoom";
 import {
   FORMAT_DATE,
   FORMAT_DATE_MONGO_ISO,
   FORMAT_TIME,
-  STATUS_BOOKING,
-  STATUS_BOOKING_COLOR,
-  STATUS_BOOKING_STR,
-  TIME_PHYSICAL_EXAM,
+  STATUS_MEETING_COLOR,
+  STATUS_MEETING_STR,
   TYPE_CALENDAR,
   formatedDate,
   formatedTime,
-  getSpecialtyName,
 } from "src/utils";
-import { getListMeetingRoom } from "src/api/meetingRoom";
+import { getTypeFile } from "src/utils/utilJsx";
 export default function CalendarPage() {
-  const [selectedMeeting, setSelectedMeeting] = useState(null);
-  const [appointments, setAppointments] = useState([]);
+  const [selectedMeeting, setSelectedMeeting] = useState({});
   const [meetings, setMeetings] = useState([]);
   const [activeList, setActiveList] = useState(1);
   const [reload, setReload] = useState(false);
@@ -53,7 +41,6 @@ export default function CalendarPage() {
     endDate: dayjs().endOf("month").format(FORMAT_DATE),
   });
   const [loading, setLoading] = useState(false);
-
   const [visibleAddMeetingRoom, setVisibleAddMeetingRoom] = useState(false);
   const [visibleAppointmentPatient, setVisibleAppointmentPatient] =
     useState(false);
@@ -62,13 +49,6 @@ export default function CalendarPage() {
   useEffect(() => {
     const initData = async () => {
       setLoading(true);
-      // Replace this with the actual API call to fetch appointments
-      // const { appointments } = await getListAppointment({
-      //   doctorId: user?._id,
-      //   status: STATUS_BOOKING.booked,
-      //   ...filterDate,
-      // });
-      // setAppointments(appointments);
       const { meetings: results } = await getListMeetingRoom({
         participant: user?._id,
         ...filterDate,
@@ -103,7 +83,7 @@ export default function CalendarPage() {
 
   const handleEventClick = ({ event }) => {
     setVisibleAppointmentPatient(true);
-    setSelectedMeeting(event.extendedProps.appointment);
+    setSelectedMeeting(event.extendedProps.meeting);
   };
 
   const onCancel = () => {
@@ -111,21 +91,6 @@ export default function CalendarPage() {
   };
 
   const renderEvents = useMemo(() => {
-    const appointmentEvents = appointments.map((appointment) => {
-      return {
-        id: appointment._id,
-        title: `Khám bệnh:`,
-        date: dayjs(
-          `${appointment.date} ${appointment.time}`,
-          "DD/MM/YYYY HH:mm"
-        ).format("YYYY-MM-DD HH:mm"),
-        time: appointment.time,
-        disabled: true,
-        appointment,
-        type: TYPE_CALENDAR.appointment,
-      };
-    });
-
     const meetingEvents = meetings.map((meeting) => {
       return {
         id: meeting._id,
@@ -142,8 +107,8 @@ export default function CalendarPage() {
       };
     });
 
-    return [...appointmentEvents, ...meetingEvents];
-  }, [appointments, meetings]);
+    return meetingEvents;
+  }, [meetings]);
 
   const filtersMeetings = useMemo(() => {
     if (activeList === 1)
@@ -152,6 +117,24 @@ export default function CalendarPage() {
       });
     return meetings;
   }, [meetings, activeList]);
+
+  const renderDateTime = useMemo(() => {
+    if (selectedMeeting?.startDate) {
+      return `${formatedDate(
+        selectedMeeting.startDate,
+        FORMAT_DATE_MONGO_ISO
+      )} ${formatedTime(
+        selectedMeeting.startDate,
+        FORMAT_DATE_MONGO_ISO,
+        FORMAT_TIME
+      )} - ${formatedTime(
+        selectedMeeting.endDate,
+        FORMAT_DATE_MONGO_ISO,
+        FORMAT_TIME
+      )}`;
+    }
+    return "";
+  }, [selectedMeeting]);
 
   return (
     <div>
@@ -214,7 +197,14 @@ export default function CalendarPage() {
                                 `}
                               </Typography.Text>
                             </Space>
-                            <Button type="text" icon={<SolutionOutlined />} />
+                            <Button
+                              type="text"
+                              onClick={() => {
+                                setVisibleAppointmentPatient(true);
+                                setSelectedMeeting(meeting);
+                              }}
+                              icon={<SolutionOutlined />}
+                            />
                           </Flex>
                         }
                       />
@@ -239,8 +229,7 @@ export default function CalendarPage() {
             loading={loading}
             initialView="dayGridMonth"
             locale="vi"
-            editable={true}
-            selectable={true}
+            selectable
             selectMirror={true}
             dayMaxEvents={true}
             eventDateFormat={FORMAT_DATE}
@@ -248,6 +237,8 @@ export default function CalendarPage() {
             select={handleDateClick}
             events={renderEvents}
             eventClick={handleEventClick}
+            droppable={false}
+            drop={false}
             eventContent={renderEventContent}
             datesSet={(dateInfo) => {
               console.log(dateInfo);
@@ -266,37 +257,69 @@ export default function CalendarPage() {
         }}
       />
       <Modal
-        title={`Lịch khám bệnh nhân: ${selectedMeeting?.patientId?.fullName}`}
+        title={`Cuộc họp về: ${selectedMeeting?.subject} | Phòng: ${selectedMeeting?.room} | ${renderDateTime}`}
         open={visibleAppointmentPatient}
         onCancel={() => setVisibleAppointmentPatient(false)}
         footer={null}
+        width={700}
       >
-        <Descriptions column={1} bordered>
-          <Descriptions.Item label="Bệnh nhân">
-            {selectedMeeting?.patientId?.fullName}
+        <Descriptions column={2} bordered>
+          <Descriptions.Item
+            span={2}
+            label="Chủ đề"
+            style={{
+              width: 150,
+            }}
+          >
+            {selectedMeeting.subject}
           </Descriptions.Item>
-          <Descriptions.Item label="Điện thoại">
-            {selectedMeeting?.patientId?.phone}
+          <Descriptions.Item label="Phòng">
+            {selectedMeeting.room}
           </Descriptions.Item>
-          <Descriptions.Item label="Ngày khám">
-            {selectedMeeting?.date}
+          <Descriptions.Item label="Ngày">
+            <strong>
+              {formatedDate(selectedMeeting.startDate, FORMAT_DATE_MONGO_ISO)}
+            </strong>
           </Descriptions.Item>
-          <Descriptions.Item label="Thời gian" style={{ fontWeight: "bold" }}>
-            {selectedMeeting?.time} ~{" "}
-            {formatedTime(
-              dayjs(selectedMeeting?.time, FORMAT_TIME).add(
-                TIME_PHYSICAL_EXAM,
-                "minute"
-              )
+          <Descriptions.Item label="Giờ bắt đầu">
+            <strong>
+              {formatedTime(
+                selectedMeeting.startDate,
+                FORMAT_DATE_MONGO_ISO,
+                FORMAT_TIME
+              )}
+            </strong>
+          </Descriptions.Item>
+          <Descriptions.Item label="Giờ kết thúc">
+            <strong>
+              {formatedTime(
+                selectedMeeting.endDate,
+                FORMAT_DATE_MONGO_ISO,
+                FORMAT_TIME
+              )}
+            </strong>
+          </Descriptions.Item>
+          <Descriptions.Item label="Người tạo">
+            {selectedMeeting.owner?.fullName}{" "}
+            {selectedMeeting.owner?._id === user?._id && (
+              <Tag color="blue">Bạn</Tag>
             )}
           </Descriptions.Item>
-          <Descriptions.Item label="Chuyên khoa">
-            {getSpecialtyName(selectedMeeting?.specialty)}
+          <Descriptions.Item label="Số điện thoại">
+            {selectedMeeting.owner?.phone}
           </Descriptions.Item>
-          <Descriptions.Item label="Trạng thái">
-            <Tag color={STATUS_BOOKING_COLOR[selectedMeeting?.status]}>
-              {STATUS_BOOKING_STR[selectedMeeting?.status]}
+          {/* <Descriptions.Item label="Trạng thái">
+            <Tag color={STATUS_MEETING_COLOR[selectedMeeting.status]}>
+              {STATUS_MEETING_STR[selectedMeeting.status]}
             </Tag>
+          </Descriptions.Item> */}
+          <Descriptions.Item label="Mô tả" span={2} style={{ height: 100 }}>
+            {selectedMeeting.description}
+          </Descriptions.Item>
+          <Descriptions.Item label="Đính kèm" span={2}>
+            <Flex gap={5} align="center">
+              {selectedMeeting?.files?.map((file) => getTypeFile(file))}
+            </Flex>
           </Descriptions.Item>
         </Descriptions>
       </Modal>
@@ -306,7 +329,7 @@ export default function CalendarPage() {
 
 function renderEventContent(eventInfo) {
   return (
-    <Space direction="vertical">
+    <Space direction="vertical" style={{ overflow: "hidden" }}>
       <i>{eventInfo.event.title}</i>
       <b>{eventInfo.event.extendedProps.time}</b>
     </Space>

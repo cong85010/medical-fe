@@ -312,13 +312,14 @@ const LayoutPage = () => {
                 icon={
                   photo ? (
                     <img
-                      width={25}
-                      height={25}
                       style={{
                         borderRadius: "50%",
                         position: "absolute",
                         left: 5,
                         top: 3,
+                        height: 25,
+                        width: 25,
+                        objectFit: "cover",
                       }}
                       src={photo}
                     />
