@@ -297,4 +297,4 @@ export const TYPE_CALENDAR = {
   meeting: "meeting",
 };
 
-
+export const getURLUploads = (url) => `${baseURL}/uploads/${url}`;

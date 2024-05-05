@@ -1,32 +1,31 @@
-import React, { useCallback, useEffect, useState } from "react";
+import { UploadOutlined } from "@ant-design/icons";
 import {
-  Modal,
+  Button,
+  Col,
+  DatePicker,
   Form,
   Input,
-  Select,
-  Button,
-  TimePicker,
-  InputNumber,
-  Col,
+  Modal,
   Row,
-  DatePicker,
+  Select,
+  TimePicker,
   Upload,
   message,
 } from "antd";
 import dayjs from "dayjs";
+import { useCallback, useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { createMeetingRoom, updateMeetingRoom } from "src/api/meetingRoom";
+import { uploadFiles } from "src/api/upload";
+import { getUsers } from "src/api/user";
 import {
   FORMAT_DATE,
   FORMAT_DATE_TIME,
   FORMAT_TIME,
   TYPE_EMPLOYEE,
-  formatedTime,
+  getSpecialtyName,
+  getURLUploads,
 } from "src/utils";
-import { UploadOutlined } from "@ant-design/icons";
-import { createMeetingRoom } from "src/api/meetingRoom";
-import { uploadFiles } from "src/api/upload";
-import { useSelector } from "react-redux";
-import { DebounceSelect } from "../DeboundSelect";
-import { getUsers } from "src/api/user";
 const { Option } = Select;
 
 let timeout;
@@ -57,9 +56,9 @@ const AddMeetingRoomModal = ({
 }) => {
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
-  const [doctors, setDoctors] = useState([]);
   const user = useSelector((state) => state.auth.user);
   const [options, setOptions] = useState([]);
+  const [isCreate, setIsCreate] = useState(true);
 
   const handleOk = () => {
     form.validateFields().then(async (values) => {
@@ -95,26 +94,52 @@ const AddMeetingRoomModal = ({
         return;
       }
 
-      let files = [];
-      if (fileList.length > 0) {
-        const { fileURLs } = await uploadFiles(fileList);
-        files = fileURLs;
+      if (isCreate) {
+        let files = [];
+        if (fileList.length > 0) {
+          const { fileURLs } = await uploadFiles(fileList);
+          files = fileURLs;
+        }
+
+        const meetingRoom = {
+          ...values,
+          startDate: startDateTime,
+          endDate: endDateTime,
+          files: files,
+          owner: user._id,
+        };
+
+        createMeetingRoom(meetingRoom).then((response) => {
+          message.success("Tạo cuộc họp thành công");
+          setFileList([]);
+          form.resetFields();
+          onAddMeetingRoom();
+        });
+      } else {
+        const filesNeedAdd = fileList.filter((file) => !file?.isAdded);
+        console.log("====================================");
+        console.log(filesNeedAdd);
+        console.log("====================================");
+        let files = selectedMeeting.files;
+        if (filesNeedAdd.length > 0) {
+          const { fileURLs } = await uploadFiles(filesNeedAdd);
+          files = files.concat(fileURLs);
+        }
+        const meetingRoom = {
+          ...selectedMeeting,
+          ...values,
+          startDate: startDateTime,
+          endDate: endDateTime,
+          files: files,
+        };
+
+        updateMeetingRoom(meetingRoom).then((response) => {
+          message.success("Chỉnh sửa cuộc họp thành công");
+          setFileList([]);
+          form.resetFields();
+          onAddMeetingRoom();
+        });
       }
-
-      const meetingRoom = {
-        ...values,
-        startDate: startDateTime,
-        endDate: endDateTime,
-        files: files,
-        owner: user._id,
-      };
-
-      createMeetingRoom(meetingRoom).then((response) => {
-        message.success("Tạo cuộc họp thành công");
-        setFileList([]);
-        form.resetFields();
-        onAddMeetingRoom();
-      });
     });
   };
 
@@ -144,9 +169,9 @@ const AddMeetingRoomModal = ({
 
           const list = users?.map((item) => {
             return {
-              label: `${item.fullName || "Chưa xác định"} - ${
-                item.phone
-              } - ${dayjs(item.birthday).format(FORMAT_DATE)}`,
+              label: `${item.fullName || "Chưa xác định"} - ${item.phone} - ${
+                getSpecialtyName(item.specialty) || "Chưa xác định"
+              }`,
               value: item._id,
             };
           });
@@ -175,11 +200,36 @@ const AddMeetingRoomModal = ({
 
   useEffect(() => {
     if (visible) {
-      form.setFieldsValue({
-        date: selectedMeeting.startDate,
-      });
+      if (selectedMeeting?._id) {
+        setIsCreate(false);
+        const participants = selectedMeeting.participants.filter(
+          (participant) => participant !== user._id
+        );
+
+        form.setFieldsValue({
+          ...selectedMeeting,
+          participants,
+          date: dayjs(selectedMeeting.startDate),
+          startDate: dayjs(selectedMeeting.startDate),
+          endDate: dayjs(selectedMeeting.endDate),
+        });
+
+        const files = selectedMeeting.files.map((item) => ({
+          uid: item,
+          name: item,
+          status: "done",
+          url: getURLUploads(item),
+          isAdded: true,
+        }));
+        setFileList(files);
+      } else {
+        form.setFieldsValue({
+          date: selectedMeeting.startDate,
+        });
+        setIsCreate(true);
+      }
     }
-  }, [form, visible, selectedMeeting]);
+  }, [form, visible, selectedMeeting, user._id]);
 
   const disabledDate = (current) => {
     // Can not select days before today and today
@@ -203,13 +253,13 @@ const AddMeetingRoomModal = ({
       newFileList.splice(index, 1);
       setFileList(newFileList);
 
-      if (medicalRecord) {
-        const fileIdx = medicalRecord.files.findIndex(
+      if (selectedMeeting) {
+        const fileIdx = selectedMeeting.files.findIndex(
           (item) => item === file.name
         );
 
         if (fileIdx !== -1) {
-          medicalRecord.files.splice(fileIdx, 1);
+          selectedMeeting.files.splice(fileIdx, 1);
         }
       }
     },
@@ -229,19 +279,15 @@ const AddMeetingRoomModal = ({
     fileList,
   };
 
-  const onChangeParticipants = (value) => {
-    setDoctors(value);
-  };
-
   if (!visible) return <></>;
 
   return (
     <Modal
-      title="Tạo lịch họp"
+      title={isCreate ? "Tạo cuộc họp" : "Chỉnh sửa cuộc họp"}
       centered
       open={visible}
       onOk={handleOk}
-      okText="Tạo cuộc họp"
+      okText={isCreate ? "Tạo mới" : "Chỉnh sửa "}
       cancelText="Hủy"
       onCancel={handleCancel}
       destroyOnClose
@@ -338,12 +384,9 @@ const AddMeetingRoomModal = ({
         >
           <Select
             allowClear
-            selectId="participants"
             placeholder="Chọn người tham gia"
             onSearch={fetchDoctorList}
-            value={doctors}
             options={options}
-            onChange={onChangeParticipants}
             style={{ width: "100%" }}
             mode="multiple"
           />

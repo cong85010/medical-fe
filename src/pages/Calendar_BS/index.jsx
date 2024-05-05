@@ -11,14 +11,16 @@ import {
   Flex,
   List,
   Modal,
+  Popconfirm,
   Space,
   Tag,
   Typography,
+  message,
 } from "antd";
 import dayjs from "dayjs";
 import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
-import { getListMeetingRoom } from "src/api/meetingRoom";
+import { deleteMeetingRoom, getListMeetingRoom } from "src/api/meetingRoom";
 import AddMeetingRoomModal from "src/components/AddMeetingRoom";
 import {
   FORMAT_DATE,
@@ -51,6 +53,7 @@ export default function CalendarPage() {
       setLoading(true);
       const { meetings: results } = await getListMeetingRoom({
         participant: user?._id,
+        owner: user?._id,
         ...filterDate,
       });
       setMeetings(results);
@@ -135,6 +138,24 @@ export default function CalendarPage() {
     }
     return "";
   }, [selectedMeeting]);
+
+  const hanldeEdit = () => {
+    setVisibleAppointmentPatient(false);
+    setVisibleAddMeetingRoom(true);
+  };
+
+  const handleDel = async () => {
+    try {
+      await deleteMeetingRoom(selectedMeeting._id);
+      message.success("Xóa cuộc họp thành công");
+      setReload(!reload);
+      setVisibleAppointmentPatient(false);
+    } catch (error) {
+      console.log("====================================");
+      console.log(error);
+      console.log("====================================");
+    }
+  };
 
   return (
     <div>
@@ -320,6 +341,26 @@ export default function CalendarPage() {
             <Flex gap={5} align="center">
               {selectedMeeting?.files?.map((file) => getTypeFile(file))}
             </Flex>
+          </Descriptions.Item>
+          <Descriptions.Item label="Hành động">
+            {selectedMeeting.owner?._id === user?._id && (
+              <Flex gap={10}>
+                <Button onClick={hanldeEdit} type="primary">
+                  Chỉnh sửa
+                </Button>
+                <Popconfirm
+                  title="Xác nhận"
+                  description="Xác nhận xóa cuộc họp"
+                  okText="Xác nhận"
+                  cancelText="Hủy"
+                  onConfirm={handleDel}
+                >
+                  <Button type="primary" danger>
+                    Xóa
+                  </Button>
+                </Popconfirm>
+              </Flex>
+            )}
           </Descriptions.Item>
         </Descriptions>
       </Modal>
