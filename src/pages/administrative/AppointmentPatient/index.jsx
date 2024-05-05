@@ -1,36 +1,32 @@
 // AppointmentPage.js
-import React, { useEffect, useState } from "react";
-import {
-  Table,
-  Space,
-  Button,
-  Modal,
-  List,
-  Skeleton,
-  Avatar,
-  Card,
-  Flex,
-  Typography,
-  DatePicker,
-  Divider,
-  Tag,
-  Tooltip,
-  Popconfirm,
-  notification,
-} from "antd";
-import dayjs from "dayjs";
-import Title from "src/components/Title";
 import {
   ArrowRightOutlined,
-  ArrowUpOutlined,
   CalendarOutlined,
   CheckCircleOutlined,
-  RightCircleOutlined,
+  RightCircleOutlined
 } from "@ant-design/icons";
+import {
+  Button,
+  DatePicker,
+  Divider,
+  Flex,
+  Modal,
+  Popconfirm,
+  Space,
+  Table,
+  Tag,
+  Tooltip,
+  Typography,
+  notification
+} from "antd";
+import dayjs from "dayjs";
+import { useEffect, useState } from "react";
 import {
   getListAppointment,
   updateStatusAppointment,
 } from "src/api/appointment";
+import Title from "src/components/Title";
+import UserItem from "src/components/UserItem";
 import {
   FORMAT_DATE,
   STATUS_BOOKING,
@@ -38,10 +34,8 @@ import {
   STATUS_BOOKING_STR,
   formatedDate,
   formatedTime,
-  getSpecialtyName,
-  getToday,
+  getSpecialtyName
 } from "src/utils";
-import UserItem from "src/components/UserItem";
 
 const AppointmentPatientPage = () => {
   const [modalVisible, setModalVisible] = useState(false);

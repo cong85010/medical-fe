@@ -17,6 +17,8 @@ import {
   MedicineBoxOutlined,
   ShoppingOutlined,
   ShoppingCartOutlined,
+  DashboardOutlined,
+  MessageOutlined,
 } from "@ant-design/icons";
 import {
   Layout,
@@ -186,6 +188,12 @@ const LayoutPage = () => {
       }
       case TYPE_EMPLOYEE.sales: {
         menuItems.push({
+          key: "statistics",
+          icon: <DashboardOutlined />,
+          label: "Thống kê",
+          link: "/statistics",
+        });
+        menuItems.push({
           key: "orders",
           icon: <ShoppingCartOutlined />,
           label: "Đơn hàng",
@@ -224,7 +232,12 @@ const LayoutPage = () => {
         break;
       }
     }
-
+    menuItems.push({
+      key: "chat",
+      icon: <MessageOutlined />,
+      label: "Tin nhắn",
+      link: "/chat",
+    });
     menuItems.push({
       key: "logout",
       icon: <LogoutOutlined />,
@@ -264,7 +277,12 @@ const LayoutPage = () => {
       >
         <Typography.Title
           level={5}
-          style={{ fontWeight: "bold", textAlign: "center", height: 64, lineHeight: "64px"}}
+          style={{
+            fontWeight: "bold",
+            textAlign: "center",
+            height: 64,
+            lineHeight: "64px",
+          }}
         >
           MEDICAL
         </Typography.Title>

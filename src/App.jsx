@@ -8,7 +8,7 @@ import UsersPage from "./pages/admin/Users";
 import CalendarPage from "./pages/doctor/Calendar";
 import ExaminationPage from "./pages/doctor/Examination";
 import MedicalRecord from "./pages/user/MedicalRecord";
-import { TYPE_EMPLOYEE } from "./utils";
+import { FORMAT_DATE, TYPE_EMPLOYEE } from "./utils";
 import { useDispatch, useSelector } from "react-redux";
 import UnauthorizedPage from "./pages/UnauthorizedPage";
 import { logoutAuth, reLoginAuth } from "./redux/slices/authSlice";
@@ -25,8 +25,16 @@ import MedicinePage from "./pages/sales/Medicine";
 import SalesPage from "./pages/sales/Sales";
 import SalesDetailPage from "./pages/sales/SalesDetail";
 import OrdersPage from "./pages/sales/Orders";
+import StatisticsPage from "./pages/sales/Statistics";
+import updateLocale from "dayjs/plugin/updateLocale";
+import ChatPage from "./pages/Chat";
 
+dayjs.extend(updateLocale);
+dayjs.updateLocale("en", {
+  weekStart: 1,
+});
 dayjs.extend(customParseFormat);
+
 const PrivateRoute = ({ element, requiredPermission = [] }) => {
   const userType = useSelector((state) => state.auth?.user?.userType);
   const loading = useSelector((state) => state.auth?.loading);
@@ -93,6 +101,10 @@ function App() {
           <Route
             path="/profile"
             element={<PrivateRoute element={<ProfilePage />} />}
+          />
+          <Route
+            path="/chat"
+            element={<PrivateRoute element={<ChatPage />} />}
           />
           <Route
             path="/users"
@@ -189,6 +201,15 @@ function App() {
             element={
               <PrivateRoute
                 element={<SalesPage />}
+                requiredPermission={[TYPE_EMPLOYEE.sales]}
+              />
+            }
+          />
+          <Route
+            path="/statistics"
+            element={
+              <PrivateRoute
+                element={<StatisticsPage />}
                 requiredPermission={[TYPE_EMPLOYEE.sales]}
               />
             }

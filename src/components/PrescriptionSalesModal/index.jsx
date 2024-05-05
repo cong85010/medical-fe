@@ -35,6 +35,7 @@ import SpaceDiv from "../SpaceDiv";
 import { getUsers } from "src/api/user";
 import { DebounceSelect } from "../DeboundSelect";
 import dayjs from "dayjs";
+import AddPatientModal from "../AddPatientModal";
 
 const PrescriptionSalesModal = ({
   medicalRecordId,
@@ -58,12 +59,21 @@ const PrescriptionSalesModal = ({
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
   const [optionMedicines, setOptionMedicines] = useState([]);
+  const [visiblePatientModal, setVisiblePatientModal] = useState(false);
 
   useEffect(() => {
     if (medicinesImport) {
       setMedicinesAdded(medicinesImport);
     }
   }, [medicinesImport]);
+
+  const handleAddPatientCancel = () => {
+    setVisiblePatientModal(false);
+  };
+
+  const handleCreatedPatientModal = (result) => {
+    setVisiblePatientModal(false);
+  };
 
   const fetchMedicienList = useCallback(async (param) => {
     try {
@@ -347,6 +357,7 @@ const PrescriptionSalesModal = ({
         {showPatients && (
           <Form.Item label="Bệnh nhân" name="patientId">
             <DebounceSelect
+              refreshData={visiblePatientModal}
               allowClear
               selectId="patientId"
               placeholder="Chọn bệnh nhân"
@@ -357,6 +368,14 @@ const PrescriptionSalesModal = ({
                 setPatient(selected);
               }}
               style={{ width: "100%" }}
+              childrenRight={
+                <Button
+                  type="primary"
+                  onClick={() => setVisiblePatientModal(true)}
+                >
+                  Thêm bệnh nhân
+                </Button>
+              }
             />
           </Form.Item>
         )}
@@ -491,6 +510,11 @@ const PrescriptionSalesModal = ({
           </Radio.Group>
         </Form.Item>
       </Form>
+      <AddPatientModal
+        visible={visiblePatientModal}
+        onCancel={handleAddPatientCancel}
+        onFinish={handleCreatedPatientModal}
+      />
     </Modal>
   );
 };

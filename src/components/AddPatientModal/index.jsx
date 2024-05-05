@@ -70,7 +70,13 @@ const AddPatientModal = ({ visible, onCancel, onFinish, selectedPatient }) => {
         </Button>,
       ]}
     >
-      <Form form={form} layout="vertical" initialValues={{ gender: "male" }}>
+      <Form
+        form={form}
+        layout="vertical"
+        initialValues={{
+          gender: "male",
+        }}
+      >
         <Form.Item
           name="fullName"
           label="Họ tên"
