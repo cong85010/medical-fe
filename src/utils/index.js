@@ -2,6 +2,7 @@ import { FileOutlined } from "@ant-design/icons";
 import { Image, Tag, notification } from "antd";
 import dayjs from "dayjs";
 import PDFViewer from "pdf-viewer-reactjs";
+import { io } from "socket.io-client";
 
 export const TYPE_EMPLOYEE = {
   admin: "admin",
@@ -17,6 +18,14 @@ export const TYPE_EMPLOYEE_STR = {
   doctor: "Bác sĩ",
   administrative: "Nhân viên hành chánh",
   sales: "Nhân viên bán hàng",
+};
+
+export const TYPE_EMPLOYEE_STR_SHORT = {
+  admin: "Quản lý",
+  user: "Người dùng",
+  doctor: "Bác sĩ",
+  administrative: "Hành chánh",
+  sales: "Bán hàng",
 };
 
 export const STATUS_BOOKING = {
@@ -244,6 +253,7 @@ export const FORMAT_DATE_TIME = "DD/MM/YYYY HH:mm";
 export const FORMAT_TIME = "HH:mm";
 export const FORMAT_FULL_TIME = "HH:mm:ss";
 export const baseURL = "http://localhost:5000";
+export const baseUrlSocket = "http://localhost:3000";
 
 export const getToday = () => {
   return dayjs().format(FORMAT_DATE);
@@ -266,6 +276,7 @@ export const formatedTime = (
 };
 
 export const getSourceImage = (url) => {
+  if (!url) return "/images/default.png";
   return `${baseURL}/uploads/${url}`;
 };
 
@@ -298,3 +309,11 @@ export const TYPE_CALENDAR = {
 };
 
 export const getURLUploads = (url) => `${baseURL}/uploads/${url}`;
+export const socket = io(baseUrlSocket, {
+  autoConnect: false,
+});
+
+export const TYPE_SOCKET = {
+  message: "message",
+  notification: "notification",
+};

@@ -193,7 +193,7 @@ export default function CalendarPage() {
                       style={{ top: -15, right: -18 }}
                     >
                       <List.Item.Meta
-                        style={{ width: "100%", padding: 5 }}
+                        style={{ width: "100%", padding: 5, overflow: "hidden" }}
                         title={`${meeting.subject}`}
                         description={
                           <Flex justify="space-between">
@@ -343,24 +343,25 @@ export default function CalendarPage() {
             </Flex>
           </Descriptions.Item>
           <Descriptions.Item label="Hành động">
-            {selectedMeeting.owner?._id === user?._id && (
-              <Flex gap={10}>
-                <Button onClick={hanldeEdit} type="primary">
-                  Chỉnh sửa
-                </Button>
-                <Popconfirm
-                  title="Xác nhận"
-                  description="Xác nhận xóa cuộc họp"
-                  okText="Xác nhận"
-                  cancelText="Hủy"
-                  onConfirm={handleDel}
-                >
-                  <Button type="primary" danger>
-                    Xóa
+            {selectedMeeting.owner?._id === user?._id &&
+              dayjs(selectedMeeting.startDate).isAfter(dayjs()) && (
+                <Flex gap={10}>
+                  <Button onClick={hanldeEdit} type="primary">
+                    Chỉnh sửa
                   </Button>
-                </Popconfirm>
-              </Flex>
-            )}
+                  <Popconfirm
+                    title="Xác nhận"
+                    description="Xác nhận xóa cuộc họp"
+                    okText="Xác nhận"
+                    cancelText="Hủy"
+                    onConfirm={handleDel}
+                  >
+                    <Button type="primary" danger>
+                      Xóa
+                    </Button>
+                  </Popconfirm>
+                </Flex>
+              )}
           </Descriptions.Item>
         </Descriptions>
       </Modal>

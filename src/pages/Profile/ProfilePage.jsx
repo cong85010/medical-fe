@@ -22,17 +22,21 @@ import {
   TYPE_EMPLOYEE_STR,
   beforeUpload,
   getBase64,
+  getSourceImage,
 } from "src/utils";
 import { useDispatch, useSelector } from "react-redux";
 import { updateUser } from "src/api/user";
 import dayjs from "dayjs";
 import { reLoginAuth } from "src/redux/slices/authSlice";
+import { uploadFiles } from "src/api/upload";
 
 const { Option } = Select;
 const ProfilePage = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [imageUrl, setImageUrl] = useState("");
+  const [fileList, setFileList] = useState([]);
+
   const user = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
   useEffect(() => {
@@ -100,6 +104,43 @@ const ProfilePage = () => {
     }
   };
 
+  const props = {
+    multiple: false,
+    onRemove: (file) => {
+      const index = fileList.indexOf(file);
+      const newFileList = fileList.slice();
+      newFileList.splice(index, 1);
+      setFileList(newFileList);
+    },
+    beforeUpload: async (file) => {
+      try {
+        const notShowError = file.type.includes("image");
+        if (!notShowError) {
+          message.error(`${file.name} is not a png file`);
+          return;
+        }
+        // only 2mb
+        const isLt2M = file.size / 1024 / 1024 < 2;
+        if (!isLt2M) {
+          notification.error({
+            message: "Kích thước ảnh phải nhỏ hơn 2MB",
+          });
+          return;
+        }
+
+        let photo = imageUrl;
+        const { fileURLs } = await uploadFiles([file]);
+        photo = fileURLs[0];
+        setImageUrl(photo);
+        return false;
+      } catch (error) {
+        console.log("====================================");
+        console.log("error", error);
+        console.log("====================================");
+      }
+    },
+  };
+
   return (
     <div style={{ padding: "20px" }}>
       <Title title="Cập nhật tài khoản" />
@@ -121,12 +162,10 @@ const ProfilePage = () => {
             <Upload
               name="photo"
               listType="picture-circle"
+              showUploadList={false}
               className="avatar-uploader"
               accept="image/png,image/jpeg,image/jpg"
-              showUploadList={false}
-              action="https://run.mocky.io/v3/435e224c-44fb-4773-9faf-380c5e6a2188"
-              beforeUpload={beforeUpload}
-              onChange={handleChange}
+              {...props}
               style={{
                 display: "flex",
                 justifyContent: "center",
@@ -135,10 +174,12 @@ const ProfilePage = () => {
             >
               {imageUrl ? (
                 <img
-                  src={imageUrl}
+                  src={getSourceImage(imageUrl)}
                   alt="avatar"
                   style={{
                     width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
                     borderRadius: "50%",
                   }}
                 />

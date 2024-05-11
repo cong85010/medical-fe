@@ -1,21 +1,44 @@
-import React, { useEffect, useRef, useState } from "react";
+import { MenuOutlined, SendOutlined, UploadOutlined } from "@ant-design/icons";
 import {
-  Input,
-  Button,
-  Row,
-  Col,
-  List,
   Avatar,
-  Divider,
+  Button,
   Card,
+  Col,
   Flex,
+  Input,
+  Row,
   Space,
+  Typography,
+  Upload,
+  message,
+  notification,
 } from "antd";
-import { MessageBox, ChatList, MessageList, Navbar } from "react-chat-elements";
+import dayjs from "dayjs";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { MessageList } from "react-chat-elements";
+import { useSelector } from "react-redux";
+import { getChatsByConversationId } from "src/api/chat";
+import {
+  createConversation,
+  getConversationsByUserId,
+} from "src/api/conversation";
+import { getUsers } from "src/api/user";
+import { DebounceSelect } from "src/components/DeboundSelect";
 import SpaceDiv from "src/components/SpaceDiv";
-import { MenuOutlined, SendOutlined } from "@ant-design/icons";
+import {
+  FORMAT_FULL_TIME,
+  TYPE_EMPLOYEE,
+  TYPE_EMPLOYEE_STR_SHORT,
+  TYPE_SOCKET,
+  formatedDate,
+  getSourceImage,
+  socket,
+} from "src/utils";
 
 const { TextArea } = Input;
+
+let timeout;
+let currentValue;
 
 const userList = [
   {
@@ -30,53 +53,323 @@ const userList = [
   // Add more users as needed
 ];
 
-const UserList = ({ onSelectUser }) => {
+const ConversationListMemo = ({ onJoin, reload, selectedConversation }) => {
+  const [userSearch, setUserSearch] = useState(null); // State to store the selected user
+  const [conversations, setConversations] = useState([]);
+  const user = useSelector((state) => state.auth.user);
+  const [isReloadConversation, setIsReloadConversation] = useState(false);
+
+  useEffect(() => {
+    const initData = async () => {
+      const { conversations: data } = await getConversationsByUserId(user._id);
+      setConversations(data);
+
+      if (data.length > 0) {
+        onJoin(data[0]);
+      }
+    };
+
+    if (user?._id) {
+      initData();
+    }
+  }, [user._id, isReloadConversation, onJoin, reload]);
+
+  const handleSelected = async (participantId) => {
+    const existConversation = conversations.find((item) =>
+      item.participants.some((participant) => participant._id === participantId)
+    );
+
+    if (existConversation) {
+      onJoin(existConversation);
+    } else {
+      const result = await createConversation({
+        participants: [participantId, user._id],
+      });
+      onJoin(result, true);
+      setIsReloadConversation((prev) => !prev);
+    }
+  };
+
+  async function fetchUserList(searchKey = "") {
+    try {
+      const result = await getUsers({
+        searchKey,
+        limit: 10,
+        userTypes: [
+          TYPE_EMPLOYEE.admin,
+          TYPE_EMPLOYEE.administrative,
+          TYPE_EMPLOYEE.doctor,
+          TYPE_EMPLOYEE.sales,
+        ],
+      });
+
+      return result?.users?.map((item) => {
+        return {
+          label: `${TYPE_EMPLOYEE_STR_SHORT[item.userType]} | ${
+            item.fullName || "Chưa xác định"
+          } - ${item.phone}`,
+          value: item._id,
+          _id: item._id,
+        };
+      });
+    } catch (error) {
+      console.log("====================================");
+      console.log(error);
+      console.log("====================================");
+    }
+  }
+
+  const renderTimeChatMessage = (date) => {
+    // if < 1 hours return minutes
+    // if < 1 day return hours
+    // if < 1 week return days
+    // if > 1 week return date
+    // usedayjs
+    // compare now and date
+    const now = dayjs();
+    const dateMessage = dayjs(date);
+    const diff = now.diff(dateMessage, "minute");
+
+    if (diff < 60) {
+      return `${diff} phút trước`;
+    }
+
+    if (diff < 24 * 60) {
+      return `${Math.floor(diff / 60)} giờ trước`;
+    }
+
+    if (diff < 7 * 24 * 60) {
+      return `${Math.floor(diff / (24 * 60))} ngày trước`;
+    }
+
+    return formatedDate(date, FORMAT_FULL_TIME);
+  };
+
   return (
-    <ChatList className="chat-list chat-list-custom" dataSource={userList} />
+    <div style={{ paddingLeft: 10, width: "100%", minWidth: 270 }}>
+      <Space direction="vertical" style={{ paddingRight: 18, width: "100%" }}>
+        <Typography.Title level={5} style={{ marginBottom: 0, marginTop: 10 }}>
+          Danh sách tin nhắn
+        </Typography.Title>
+        <DebounceSelect
+          allowClear
+          selectId="patientId"
+          placeholder="Nhắn tin đồng nghiệp..."
+          fetchOptions={fetchUserList}
+          initValue={userSearch?._id}
+          value={userSearch}
+          onChange={(selected) => {
+            setUserSearch(selected);
+          }}
+          onSelected={handleSelected}
+          style={{ width: "100%" }}
+        />
+      </Space>
+      <SpaceDiv height={10} />
+      {conversations.length === 0 && (
+        <Flex justify="center" style={{ padding: 10 }}>
+          <Typography.Text type="secondary">
+            Không có tin nhắn nào
+          </Typography.Text>
+        </Flex>
+      )}
+      <Flex
+        vertical
+        gap={10}
+        style={{ height: "70vh", overflowY: "auto", paddingRight: 10 }}
+      >
+        {conversations.map((conversation) => {
+          const participant = conversation.participants.find(
+            (item) => item._id !== user._id
+          );
+
+          return (
+            <Card
+              key={conversation._id}
+              style={{ cursor: "pointer", width: "100%" }}
+              hoverable
+              styles={{
+                body: {
+                  padding: 10,
+                  borderRadius: 8,
+                  border:
+                    conversation._id === selectedConversation?._id
+                      ? "1px solid #1890ff"
+                      : "1px solid #f2f2f2",
+                },
+              }}
+              onClick={() => onJoin(conversation)}
+            >
+              <Flex gap={10} align="center">
+                <Avatar
+                  style={{
+                    width: 40,
+                    height: 40,
+                  }}
+                  src={getSourceImage(participant.photo)}
+                  alt="Reactjs"
+                />
+                <Flex vertical gap={5}>
+                  <Typography.Text>
+                    {participant.fullName || "Chưa xác định"}
+                  </Typography.Text>
+                  <Typography.Text type="secondary">
+                    {participant.phone}
+                  </Typography.Text>
+                </Flex>
+                <Typography.Text
+                  type="secondary"
+                  style={{
+                    position: "absolute",
+                    right: 10,
+                    bottom: 10,
+                    fontSize: 14,
+                  }}
+                >
+                  {renderTimeChatMessage(conversation.updatedAt)}
+                </Typography.Text>
+              </Flex>
+            </Card>
+          );
+        })}
+      </Flex>
+    </div>
   );
 };
 
 const ChatPage = () => {
-  const [selectedUser, setSelectedUser] = useState(null); // State to store the selected user
-  const [messages, setMessages] = useState([
-    {
-      position: "left",
-      type: "text",
-      title: "Kursat",
-      text: "Give me a message list example !",
-    },
-    {
-      position: "right",
-      type: "text",
-      title: "Emre",
-      text: "That's all.",
-    },
-  ]);
+  const [selectedConversation, setSelectedConversation] = useState({}); // State to store the selected user
+  const [inputMessage, setInputMessage] = useState(""); // State to store the selected user
+  const [messages, setMessages] = useState([]);
+  const [isConnected, setIsConnected] = useState(false);
+  const user = useSelector((state) => state.auth.user);
+  const [participant, setParticipant] = useState({});
+  const [isReloadConversationList, setIsReloadConversationList] =
+    useState(false);
+  const [fileList, setFileList] = useState([]);
 
- 
   useEffect(() => {
-    const chatContainer = document.getElementById('chat-container');
+    socket.connect();
+    function onConnect() {
+      console.log("Connected");
+      setIsConnected(true);
+    }
+
+    function onDisconnect() {
+      setIsConnected(false);
+    }
+
+    function onMessage(newMessage) {
+      const { sendBy } = newMessage;
+
+      newMessage.position = sendBy === user._id ? "right" : "left";
+
+      setMessages((prevMessages) => [...prevMessages, newMessage]);
+    }
+
+    function newConversation({ conversation }) {
+      // Check have me to new conversation
+      if (conversation.participants.includes(user._id)) {
+        setIsReloadConversationList((prev) => !prev);
+      }
+    }
+
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+    socket.on("message", onMessage);
+    socket.on("newConversation", newConversation);
+
+    return () => {
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
+      socket.off("message", onMessage);
+      socket.off("newConversation", newConversation);
+    };
+  }, [user._id]);
+
+  useEffect(() => {
+    if (selectedConversation._id) {
+      socket.emit("joinRoom", selectedConversation._id);
+    }
+  }, [selectedConversation]);
+
+  useEffect(() => {
+    const chatContainer = document.getElementById("chat-container");
     if (chatContainer) {
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
   }, [messages]);
 
-  const handleSendMessage = (text) => {
-    const newMessage = {
-      position: "right",
-      type: "text",
-      text: "text",
-      date: new Date(),
-    };
-    setMessages([...messages, newMessage]);
-    // Here you can implement sending message to server or external API
+  const handleSendMessage = () => {
+    try {
+      const data = {
+        to: participant?._id,
+        sendBy: user._id,
+        text: inputMessage,
+        type: "text",
+        conversationId: selectedConversation?._id,
+      };
+      socket.emit(TYPE_SOCKET.message, {
+        roomId: selectedConversation?._id,
+        message: data,
+      });
+
+      setInputMessage("");
+    } catch (error) {
+      console.log("====================================");
+      console.log(error);
+      console.log("====================================");
+    }
   };
+
+  const handleJoinConversation = useCallback(
+    async (conversation, isNew = false) => {
+      if (isNew) {
+        socket.emit("newConversation", conversation);
+      }
+      setInputMessage("");
+      setSelectedConversation(conversation);
+
+      setParticipant(
+        conversation.participants.find((item) => item._id !== user._id)
+      );
+      const { chats } = await getChatsByConversationId(conversation._id);
+      setMessages(chats);
+    },
+    [user._id]
+  );
+
+  const renderMessages = useMemo(() => {
+    const photoLeft = getSourceImage(participant.photo);
+    const nameLeft = participant.fullName || "Chưa xác định";
+
+    return messages.map((message) => {
+      const { sendBy } = message;
+      const possiton =
+        sendBy._id === user._id || sendBy === user._id ? "right" : "left";
+      const isRight = possiton === "right";
+
+      return {
+        avatar: isRight ? null : photoLeft,
+        title: isRight ? null : nameLeft,
+        text: message.text,
+        date: message.createdAt,
+        position: possiton,
+        type: "text",
+        tintColor: isRight ? "#0084FF" : "#f4f4f4",
+      };
+    });
+  }, [messages, participant.fullName, participant.photo, user._id]);
 
   return (
     <Card styles={{ body: { padding: 0 } }}>
-      <Row gutter={[16, 16]}>
-        <Col span={6} style={{ paddingRight: 10 }}>
-          <UserList onSelectUser={setSelectedUser} />
+      <Row gutter={[4, 4]}>
+        <Col span={6} style={{}}>
+          <ConversationListMemo
+            onJoin={handleJoinConversation}
+            selectedConversation={selectedConversation}
+            reload={isReloadConversationList}
+          />
         </Col>
         <Col
           span={18}
@@ -99,14 +392,11 @@ const ChatPage = () => {
           >
             <Card.Meta
               avatar={
-                <Avatar
-                  src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg"
-                  alt="Reactjs"
-                />
+                <Avatar src={getSourceImage(participant.photo)} alt="Reactjs" />
               }
-              title="Facebook"
+              title={participant?.fullName || "Chưa xác định"}
             />
-            <Button
+            {/* <Button
               onClick={() => console.log("Menu Clicked")}
               type="text"
               style={{
@@ -116,7 +406,7 @@ const ChatPage = () => {
               }}
             >
               <MenuOutlined />
-            </Button>
+            </Button> */}
           </Flex>
           <SpaceDiv height={10} />
           <Flex
@@ -124,17 +414,24 @@ const ChatPage = () => {
             justify="space-between"
             style={{
               height: "calc(100% - 80px)",
-              minWidth: 500,
+              minWidth: 350,
             }}
           >
             <MessageList
               className="message-list message-list-custom"
               lockable={true}
               toBottomHeight={"100%"}
-              dataSource={messages}
+              dataSource={renderMessages}
             />
             <Space.Compact style={{ width: "100%", padding: 10 }}>
-              <Input size="large" defaultValue="Combine input and button" />
+              <Input
+                size="large"
+                placeholder="Nhập tin nhắn..."
+                value={inputMessage}
+                onPressEnter={handleSendMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                defaultValue="Combine input and button"
+              />
               <Button
                 size="large"
                 type="primary"

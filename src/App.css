@@ -78,3 +78,8 @@ NOTE: for old browsers, will need to restart watcher after changing a variable
 .message-list-custom {
   overflow-y: auto;
 }
+
+.antd-upload-custom {
+  display: flex;
+  gap: 10px;
+}

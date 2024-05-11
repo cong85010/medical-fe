@@ -1,44 +1,40 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  BellOutlined,
+  CalendarOutlined,
+  ClockCircleOutlined,
+  DashboardOutlined,
+  FileOutlined,
+  GroupOutlined,
+  LogoutOutlined,
+  MedicineBoxOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  UploadOutlined,
-  UserOutlined,
-  VideoCameraOutlined,
-  BellOutlined,
-  LogoutOutlined,
-  GroupOutlined,
-  CalendarOutlined,
-  FileOutlined,
-  UserSwitchOutlined,
-  UsergroupAddOutlined,
-  ClockCircleOutlined,
-  CheckCircleOutlined,
-  MedicineBoxOutlined,
-  ShoppingOutlined,
-  ShoppingCartOutlined,
-  DashboardOutlined,
   MessageOutlined,
+  ShoppingCartOutlined,
+  ShoppingOutlined,
+  UserOutlined,
+  UserSwitchOutlined,
+  UsergroupAddOutlined
 } from "@ant-design/icons";
 import {
-  Layout,
-  Menu,
-  Button,
-  theme,
-  Typography,
-  Flex,
   Avatar,
-  List,
-  Popover,
-  Dropdown,
+  Button,
   Card,
+  Flex,
+  Layout,
+  List,
+  Menu,
+  Popover,
   Space,
+  Typography,
+  theme
 } from "antd";
-import { Link, Outlet, useNavigate } from "react-router-dom";
-import { TYPE_EMPLOYEE } from "src/utils";
-import { useSelector } from "react-redux";
-import Title from "src/components/Title";
 import dayjs from "dayjs";
+import { useEffect, useMemo, useState } from "react";
+import { useSelector } from "react-redux";
+import { Link, Outlet, useNavigate } from "react-router-dom";
+import Title from "src/components/Title";
+import { TYPE_EMPLOYEE, getSourceImage } from "src/utils";
 const { Header, Sider, Content } = Layout;
 const data = [
   {
@@ -162,6 +158,12 @@ const LayoutPage = () => {
             label: "Khám bệnh",
             link: "/examination",
           },
+          {
+            key: "chat",
+            icon: <MessageOutlined />,
+            label: "Tin nhắn",
+            link: "/chat",
+          },
         ];
 
         menuItems.push(...menus);
@@ -181,36 +183,51 @@ const LayoutPage = () => {
             label: "Khám bệnh",
             link: "/appointments-patient",
           },
+          {
+            key: "chat",
+            icon: <MessageOutlined />,
+            label: "Tin nhắn",
+            link: "/chat",
+          },
         ];
 
         menuItems.push(...menus);
         break;
       }
       case TYPE_EMPLOYEE.sales: {
-        menuItems.push({
-          key: "statistics",
-          icon: <DashboardOutlined />,
-          label: "Thống kê",
-          link: "/statistics",
-        });
-        menuItems.push({
-          key: "orders",
-          icon: <ShoppingCartOutlined />,
-          label: "Đơn hàng",
-          link: "/orders",
-        });
-        menuItems.push({
-          key: "sales",
-          icon: <ShoppingOutlined />,
-          label: "Kê toa",
-          link: "/sales",
-        });
-        menuItems.push({
-          key: "medicine",
-          icon: <MedicineBoxOutlined />,
-          label: "Thuốc",
-          link: "/medicine",
-        });
+        const menus = [
+          {
+            key: "statistics",
+            icon: <DashboardOutlined />,
+            label: "Thống kê",
+            link: "/statistics",
+          },
+          {
+            key: "orders",
+            icon: <ShoppingCartOutlined />,
+            label: "Đơn hàng",
+            link: "/orders",
+          },
+          {
+            key: "sales",
+            icon: <ShoppingOutlined />,
+            label: "Kê toa",
+            link: "/sales",
+          },
+          {
+            key: "medicine",
+            icon: <MedicineBoxOutlined />,
+            label: "Thuốc",
+            link: "/medicine",
+          },
+          {
+            key: "chat",
+            icon: <MessageOutlined />,
+            label: "Tin nhắn",
+            link: "/chat",
+          },
+        ];
+        menuItems.push(...menus);
         break;
       }
       case TYPE_EMPLOYEE.user: {
@@ -226,18 +243,14 @@ const LayoutPage = () => {
           label: "Lịch hẹn",
           link: "/appointment",
         });
+
         break;
       }
       default: {
         break;
       }
     }
-    menuItems.push({
-      key: "chat",
-      icon: <MessageOutlined />,
-      label: "Tin nhắn",
-      link: "/chat",
-    });
+
     menuItems.push({
       key: "logout",
       icon: <LogoutOutlined />,
@@ -315,14 +328,14 @@ const LayoutPage = () => {
             <Clock />
 
             <Flex style={{ marginRight: 20 }} align="center" gap={20}>
-              <Popover
+              {/* <Popover
                 content={contentNoti}
                 title="Thông báo"
                 placement="bottomRight"
                 trigger="click"
               >
                 <Button type="text" icon={<BellOutlined size={2} />} />
-              </Popover>
+              </Popover> */}
               <Button
                 type="text"
                 style={{ paddingLeft: 30 }}
@@ -339,7 +352,7 @@ const LayoutPage = () => {
                         width: 25,
                         objectFit: "cover",
                       }}
-                      src={photo}
+                      src={getSourceImage(photo)}
                     />
                   ) : (
                     <UserOutlined />
