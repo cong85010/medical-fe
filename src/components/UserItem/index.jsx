@@ -4,6 +4,7 @@ import {
   FORMAT_DATE_MONGO,
   birthdayAndAge,
   formatedDate,
+  getSourceImage,
   getSpecialtyName,
 } from "src/utils";
 const { Meta } = Card;
@@ -16,7 +17,7 @@ const UserItem = ({
 }) => {
   const getAvatarContent = () => {
     if (user.photo) {
-      return <Avatar src={user.avatarUrl} />;
+      return <Avatar src={getSourceImage(user.photo)} />;
     }
     return null;
   };

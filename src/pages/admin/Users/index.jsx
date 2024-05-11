@@ -22,6 +22,7 @@ import {
   notification,
   Tooltip,
   DatePicker,
+  Avatar,
 } from "antd";
 import dayjs from "dayjs";
 import React, { useEffect, useState } from "react";
@@ -41,6 +42,7 @@ import {
   TYPE_EMPLOYEE,
   TYPE_EMPLOYEE_STR,
   colorOfType,
+  getSourceImage,
 } from "src/utils";
 const { Option } = Select;
 
@@ -69,6 +71,21 @@ export default function UsersPage() {
   const navigate = useNavigate();
 
   const columns = [
+    {
+      title: "STT",
+      dataIndex: "index",
+      key: "index",
+      width: 70,
+      align: "center",
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: "Ảnh",
+      dataIndex: "photo",
+      width: 60,
+      key: "photo",
+      render: (photo) => <Avatar src={getSourceImage(photo)} />,
+    },
     {
       title: "Email",
       dataIndex: "email",
@@ -362,7 +379,7 @@ export default function UsersPage() {
           wrapperCol={{ span: 16 }}
           style={{ marginTop: 20 }}
           initialValues={{
-            gender: 'male',
+            gender: "male",
           }}
         >
           <Form.Item

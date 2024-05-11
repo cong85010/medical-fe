@@ -1,4 +1,9 @@
-import { MenuOutlined, SendOutlined, UploadOutlined } from "@ant-design/icons";
+import {
+  MenuOutlined,
+  ReloadOutlined,
+  SendOutlined,
+  UploadOutlined,
+} from "@ant-design/icons";
 import {
   Avatar,
   Button,
@@ -8,6 +13,7 @@ import {
   Input,
   Row,
   Space,
+  Tooltip,
   Typography,
   Upload,
   message,
@@ -130,6 +136,11 @@ const ConversationListMemo = ({ onJoin, reload, selectedConversation }) => {
     const dateMessage = dayjs(date);
     const diff = now.diff(dateMessage, "minute");
 
+    if (diff === 0) {
+      // seconds
+      const seconds = now.diff(dateMessage, "second");
+      return `${seconds} giây trước`;
+    }
     if (diff < 60) {
       return `${diff} phút trước`;
     }
@@ -147,10 +158,22 @@ const ConversationListMemo = ({ onJoin, reload, selectedConversation }) => {
 
   return (
     <div style={{ paddingLeft: 10, width: "100%", minWidth: 270 }}>
-      <Space direction="vertical" style={{ paddingRight: 18, width: "100%" }}>
-        <Typography.Title level={5} style={{ marginBottom: 0, marginTop: 10 }}>
-          Danh sách tin nhắn
-        </Typography.Title>
+      <Space
+        direction="vertical"
+        style={{ paddingRight: 18, width: "100%", marginTop: 10 }}
+      >
+        <Flex align="center" justify="space-between">
+          <Typography.Title level={5} style={{ marginBottom: 0 }}>
+            Danh sách tin nhắn
+          </Typography.Title>
+          <Tooltip title="Làm mới">
+            <Button
+              type="text"
+              onClick={() => setIsReloadConversation((prev) => !prev)}
+              icon={<ReloadOutlined />}
+            />
+          </Tooltip>
+        </Flex>
         <DebounceSelect
           allowClear
           selectId="patientId"
