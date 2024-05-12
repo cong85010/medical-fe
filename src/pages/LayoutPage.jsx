@@ -14,7 +14,7 @@ import {
   ShoppingOutlined,
   UserOutlined,
   UserSwitchOutlined,
-  UsergroupAddOutlined
+  UsergroupAddOutlined,
 } from "@ant-design/icons";
 import {
   Avatar,
@@ -26,15 +26,21 @@ import {
   Menu,
   Popover,
   Space,
+  Tag,
   Typography,
-  theme
+  theme,
 } from "antd";
 import dayjs from "dayjs";
 import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import Title from "src/components/Title";
-import { TYPE_EMPLOYEE, getSourceImage } from "src/utils";
+import {
+  TYPE_EMPLOYEE,
+  TYPE_EMPLOYEE_STR_SHORT,
+  colorOfType,
+  getSourceImage,
+} from "src/utils";
 const { Header, Sider, Content } = Layout;
 const data = [
   {
@@ -101,7 +107,7 @@ const Clock = () => {
 };
 
 const LayoutPage = () => {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
@@ -109,6 +115,7 @@ const LayoutPage = () => {
   const {
     user: { phone, userType, fullName, photo },
   } = useSelector((state) => state.auth);
+  const user = useSelector((state) => state.auth.user);
 
   const contentNoti = (
     <List
@@ -288,17 +295,32 @@ const LayoutPage = () => {
         theme="light"
         width={250}
       >
-        <Typography.Title
-          level={5}
+        <div
           style={{
-            fontWeight: "bold",
-            textAlign: "center",
             height: 64,
-            lineHeight: "64px",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            flexDirection: "column",
           }}
         >
-          MEDICAL
-        </Typography.Title>
+          <Typography.Title
+            level={5}
+            style={{
+              fontWeight: "bold",
+              textAlign: "center",
+            }}
+          >
+            MEDICAL
+          </Typography.Title>
+          {collapsed ? null : (
+            <Tag color={colorOfType[user?.userType]}>
+              <Typography.Text>
+                {TYPE_EMPLOYEE_STR_SHORT[user?.userType]}
+              </Typography.Text>
+            </Tag>
+          )}
+        </div>
         <Menu
           theme="light"
           mode="inline"

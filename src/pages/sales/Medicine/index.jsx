@@ -82,11 +82,11 @@ const MedicinePage = () => {
     [listMedicine]
   );
 
-  useEffect(() => {
-    if (showAddModal) {
-      handleSearchModal();
-    }
-  }, [handleSearchModal, showAddModal]);
+  // useEffect(() => {
+  //   if (showAddModal) {
+  //     handleSearchModal();
+  //   }
+  // }, [handleSearchModal, showAddModal]);
 
   const handleEnterExamination = async (record) => {
     try {
@@ -107,7 +107,6 @@ const MedicinePage = () => {
   const handleShowEdit = (record) => {
     form.setFieldsValue({
       ...record,
-      name: [record.name],
     });
     setIsCreate(false);
     setShowAddModal(true);
@@ -246,15 +245,18 @@ const MedicinePage = () => {
         console.log(values);
         const data = {
           ...values,
-          name: values.name[0],
         };
 
         if (isCreate) {
           await createMedicine(data);
-          message.success("Thêm thuốc thành công");
+          notification.success({
+            message: "Thêm thuốc thành công",
+          });
         } else {
           await updateMedicine(data);
-          message.success("Cập nhật thuốc thành công");
+          notification.success({
+            message: "Cập nhật thuốc thành công",
+          });
         }
         form.resetFields();
         handleCancel();
@@ -317,8 +319,17 @@ const MedicinePage = () => {
         open={showAddModal}
         onOk={handleOk}
         onCancel={handleCancel}
+        okText={isCreate ? "Thêm" : "Cập nhật"}
+        cancelText="Hủy"
       >
-        <Form form={form} labelCol={{ span: 5 }} labelAlign="left">
+        <Form
+          form={form}
+          labelCol={{ span: 5 }}
+          initialValues={{
+            usage: "after",
+          }}
+          labelAlign="left"
+        >
           <Form.Item name="_id" hidden>
             <Input />
           </Form.Item>
@@ -327,14 +338,7 @@ const MedicinePage = () => {
             name="name"
             rules={[{ required: true, message: "Vui lòng nhập tên thuốc" }]}
           >
-            <Select
-              placeholder="Tên thuốc"
-              mode="tags"
-              maxCount={1}
-              onSearch={handleSearchModal}
-              onChange={handleChange}
-              options={listMedicineFilter}
-            />
+            <Input placeholder="Nhập tên thuốc" />
           </Form.Item>
           <Form.Item
             label="Số lượng"
@@ -361,6 +365,7 @@ const MedicinePage = () => {
             label="Cách dùng"
             name="usage"
             rules={[{ required: true, message: "Vui lòng nhập cách dùng" }]}
+            valuePropName="value"
           >
             <Radio.Group>
               <Radio value="before">Trước ăn</Radio>

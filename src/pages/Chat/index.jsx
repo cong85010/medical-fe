@@ -20,7 +20,7 @@ import {
   notification,
 } from "antd";
 import dayjs from "dayjs";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MessageList } from "react-chat-elements";
 import { useSelector } from "react-redux";
 import { getChatsByConversationId } from "src/api/chat";
@@ -109,11 +109,13 @@ const ConversationListMemo = ({ onJoin, reload, selectedConversation }) => {
         ],
       });
 
-      return result?.users?.map((item) => {
+      const list = result.users.filter((item) => item._id !== user._id);
+
+      return list?.map((item) => {
         return {
           label: `${TYPE_EMPLOYEE_STR_SHORT[item.userType]} | ${
             item.fullName || "Chưa xác định"
-          } - ${item.phone}`,
+          } - ${item.phone || "Trống"}`,
           value: item._id,
           _id: item._id,
         };
@@ -202,9 +204,9 @@ const ConversationListMemo = ({ onJoin, reload, selectedConversation }) => {
         style={{ height: "70vh", overflowY: "auto", paddingRight: 10 }}
       >
         {conversations.map((conversation) => {
-          const participant = conversation.participants.find(
-            (item) => item._id !== user._id
-          );
+          const participant =
+            conversation.participants.find((item) => item._id !== user._id) ||
+            {};
 
           return (
             <Card
@@ -269,7 +271,7 @@ const ChatPage = () => {
   const [participant, setParticipant] = useState({});
   const [isReloadConversationList, setIsReloadConversationList] =
     useState(false);
-  const [fileList, setFileList] = useState([]);
+  const refChat = useRef(null);
 
   useEffect(() => {
     socket.connect();
@@ -283,7 +285,12 @@ const ChatPage = () => {
     }
 
     function onMessage(newMessage) {
-      const { sendBy } = newMessage;
+      const { sendBy, to } = newMessage;
+
+      // Validate in conversation to add
+      if (selectedConversation._id !== newMessage.conversationId) {
+        return;
+      }
 
       newMessage.position = sendBy === user._id ? "right" : "left";
 
@@ -317,10 +324,15 @@ const ChatPage = () => {
   }, [selectedConversation]);
 
   useEffect(() => {
-    const chatContainer = document.getElementById("chat-container");
-    if (chatContainer) {
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
+    const containerChat = document.querySelector(
+      ".message-list-custom .rce-mlist"
+    );
+    let timeout = setTimeout(() => {
+      containerChat.scrollTop = containerChat.scrollHeight;
+    }, 100);
+    return () => {
+      clearTimeout(timeout);
+    };
   }, [messages]);
 
   const handleSendMessage = () => {
@@ -354,7 +366,7 @@ const ChatPage = () => {
       setSelectedConversation(conversation);
 
       setParticipant(
-        conversation.participants.find((item) => item._id !== user._id)
+        conversation.participants.find((item) => item._id !== user._id) || {}
       );
       const { chats } = await getChatsByConversationId(conversation._id);
       setMessages(chats);

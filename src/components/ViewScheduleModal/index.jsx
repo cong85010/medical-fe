@@ -29,6 +29,7 @@ import {
 import {
   DeleteOutlined,
   EditOutlined,
+  InfoCircleOutlined,
   ReloadOutlined,
 } from "@ant-design/icons";
 
@@ -68,7 +69,6 @@ const ViewScheduleModal = ({
 
   const hasPermissionEdit = (record) => {
     //Có thể chỉnh sửa nếu thời gian đặt cách thời gian hiện tại 2 tiếng
-
     return record.status === STATUS_BOOKING.booked &&
       isTimeBeforeCurrentByHours(record.date, record.time, TIME_CAN_EDIT) ? (
       <>
@@ -103,7 +103,11 @@ const ViewScheduleModal = ({
           </Tooltip>
         </Popconfirm>
       </>
-    ) : null;
+    ) : (
+      <Tooltip title="Chỉ có thể hủy/thay đổi trước 2 giờ">
+        <Button type="text" icon={<InfoCircleOutlined />} />
+      </Tooltip>
+    );
   };
 
   const columns = [
@@ -111,7 +115,7 @@ const ViewScheduleModal = ({
       title: "Ngày đặt",
       dataIndex: "createdAt",
       key: "createdAt",
-      width: 200,
+      width: 120,
       render: (createdAt) => {
         return dayjs(createdAt).format("HH:mm:ss DD/MM/YYYY");
       },
@@ -144,6 +148,7 @@ const ViewScheduleModal = ({
       },
     },
     {
+      width: 150,
       title: "Bác sĩ",
       dataIndex: "doctorId",
       key: "doctorId",
@@ -166,8 +171,9 @@ const ViewScheduleModal = ({
       title: "Hành động",
       width: 150,
       key: "action",
+      align: "center",
       render: (text, record) => {
-        return <Flex gap={10}>{hasPermissionEdit(record)}</Flex>;
+        return <Flex gap={10} justify="center">{hasPermissionEdit(record)}</Flex>;
       },
     },
   ];
@@ -177,6 +183,7 @@ const ViewScheduleModal = ({
       // Replace this with the actual API call to fetch appointments
       const { appointments } = await getListAppointment({
         patientId: selectedPatient?._id,
+        status: STATUS_BOOKING.booked,
       });
       setAppointments(appointments);
     };
@@ -199,7 +206,7 @@ const ViewScheduleModal = ({
   }
   return (
     <Modal
-      width={900}
+      width={1000}
       title={`Lịch hẹn khám bệnh: ${
         selectedPatient?.fullName || "Chưa xác định"
       } - ${selectedPatient?.phone} `}

@@ -8,7 +8,6 @@ export const getUsagesTable = (usage) => (
   </Tag>
 );
 
-
 export const getTypeFile = (url) => {
   const urlBE = getSourceImage(url);
   if (!url) return "";

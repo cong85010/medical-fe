@@ -29,7 +29,12 @@ import {
 } from "src/api/appointment";
 import SelectSpecialty from "../SelectSpecialty";
 import { SelectDoctor } from "../SelectDoctor";
-import { FORMAT_DATE, formatedDate, formatedTime, getSpecialtyName } from "src/utils";
+import {
+  FORMAT_DATE,
+  formatedDate,
+  formatedTime,
+  getSpecialtyName,
+} from "src/utils";
 import { formatDate } from "@fullcalendar/core";
 
 export default function AddAppointmentPatient({
@@ -192,7 +197,15 @@ export default function AddAppointmentPatient({
   return (
     <>
       <Modal
-        title={selectedAppointent?._id ? `Cập nhật lịch khám: ${formatedTime(selectedAppointent.time)} - ${formatedDate(selectedAppointent.date)} - ${getSpecialtyName(selectedAppointent.specialty)}`: "Đặt lịch khám"}
+        title={
+          selectedAppointent?._id
+            ? `Cập nhật lịch khám: ${formatedTime(
+                selectedAppointent.time
+              )} - ${formatedDate(
+                selectedAppointent.date
+              )} - ${getSpecialtyName(selectedAppointent.specialty)}`
+            : "Đặt lịch khám"
+        }
         open={visible}
         onOk={handleAppointmentOk}
         onCancel={onCancelModal}
@@ -242,7 +255,14 @@ export default function AddAppointmentPatient({
               },
             ]}
           >
-            <SelectSpecialty onChange={(item) => setSpecialty(item)} />
+            <SelectSpecialty
+              onChange={(item) => {
+                setSpecialty(item);
+                form.setFieldValue("doctor", null);
+                setDoctorId("");
+                setRefreshData(!refreshData);
+              }}
+            />
           </Form.Item>
           <Form.Item
             label="Chọn bác sĩ"

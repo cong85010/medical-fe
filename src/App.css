@@ -2,7 +2,9 @@ body {
   margin: 0;
   padding: 0;
 }
-
+* {
+  scroll-behavior: smooth;
+}
 #root {
   min-height: 100vh;
 }

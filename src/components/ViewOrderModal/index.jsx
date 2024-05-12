@@ -32,15 +32,13 @@ const ViewOrderModal = ({
   onCancel,
   selectedOrder,
   medicalRecordId,
+  hiddenFooter = false,
 }) => {
   const [loading, setLoading] = useState(false);
   const [medicinesAdded, setMedicinesAdded] = useState([]);
   const [order, setOrder] = useState({});
   const [form] = Form.useForm();
 
-  console.log("====================================");
-  console.log(selectedOrder);
-  console.log("====================================");
   useEffect(() => {
     const fetchOrderByMedicalId = async () => {
       try {
@@ -130,19 +128,23 @@ const ViewOrderModal = ({
       title={`Đơn hàng: ${order?.orderNumber}`}
       open={visible}
       onCancel={handleCancel}
-      footer={[
-        <Button key="back" onClick={handleCancel}>
-          Đóng
-        </Button>,
-        <Button
-          key="submit"
-          type="primary"
-          onClick={handlePrint}
-          loading={loading}
-        >
-          In hoá đơn
-        </Button>,
-      ]}
+      footer={
+        hiddenFooter
+          ? null
+          : [
+              <Button key="back" onClick={handleCancel}>
+                Đóng
+              </Button>,
+              <Button
+                key="submit"
+                type="primary"
+                onClick={handlePrint}
+                loading={loading}
+              >
+                In hoá đơn
+              </Button>,
+            ]
+      }
       okText="Thanh toán"
       cancelText="Hủy"
       centered

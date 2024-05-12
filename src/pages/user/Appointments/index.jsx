@@ -47,16 +47,20 @@ export default function AppointmentsPage() {
 
   return (
     <div>
-      <Title title="Lịch hẹn" />
-      <Flex justify="end" style={{ marginBottom: 10 }}>
-        <Button
-          type="primary"
-          icon={<PlusCircleFilled />}
-          onClick={() => setAddVisiableAppointment(true)}
-        >
-          Hẹn lịch khám
-        </Button>
-      </Flex>
+      <Title
+        title="Lịch hẹn"
+        right={
+          <Flex justify="flex-end" style={{ flex: 1 }}>
+            <Button
+              type="primary"
+              icon={<PlusCircleFilled />}
+              onClick={() => setAddVisiableAppointment(true)}
+            >
+              Hẹn lịch khám
+            </Button>
+          </Flex>
+        }
+      />
       <AddAppointmentPatient
         visible={addVisiableAppointment}
         onCancel={handleAddAppointmentCancel}

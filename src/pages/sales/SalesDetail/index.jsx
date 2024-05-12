@@ -2,6 +2,7 @@ import {
   CheckCircleOutlined,
   EditOutlined,
   EyeOutlined,
+  FileDoneOutlined,
   FilePdfOutlined,
   MinusOutlined,
   ShopOutlined,
@@ -216,7 +217,7 @@ const SalesDetailPage = () => {
         ) : (
           <Tooltip title="Xem đơn hàng">
             <Button
-              icon={<EyeOutlined />}
+              icon={<FileDoneOutlined />}
               onClick={() => handleViewOrder(record)}
             />
           </Tooltip>

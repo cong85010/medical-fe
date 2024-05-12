@@ -14,7 +14,7 @@ import UnauthorizedPage from "./pages/UnauthorizedPage";
 import { logoutAuth, reLoginAuth } from "./redux/slices/authSlice";
 import { Spin, notification } from "antd";
 import ProfileMedicalPage from "./pages/administrative/ProfileMedical";
-import PatientPage from "./pages/user/Patient/PatientPage";
+import PatientPage from "./pages/administrative/Patient/PatientPage";
 import AppointmentPatientPage from "./pages/administrative/AppointmentPatient";
 import ProfilePage from "./pages/Profile/ProfilePage";
 import AppointmentsPage from "./pages/user/Appointments";

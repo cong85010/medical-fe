@@ -66,7 +66,9 @@ const AddPatientModal = ({ visible, onCancel, onFinish, selectedPatient }) => {
           Hủy
         </Button>,
         <Button key="submit" type="primary" onClick={handleOk}>
-          Thêm
+          {
+            selectedPatient ? "Cập nhật" : "Thêm"
+          }
         </Button>,
       ]}
     >
