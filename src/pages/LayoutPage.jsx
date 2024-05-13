@@ -107,7 +107,7 @@ const Clock = () => {
 };
 
 const LayoutPage = () => {
-  const [collapsed, setCollapsed] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
@@ -149,6 +149,12 @@ const LayoutPage = () => {
           label: "Người dùng",
           link: "/users",
         });
+        menuItems.push(  {
+          key: "chat",
+          icon: <MessageOutlined />,
+          label: "Tin nhắn",
+          link: "/chat",
+        },);
         break;
       }
       case TYPE_EMPLOYEE.doctor: {

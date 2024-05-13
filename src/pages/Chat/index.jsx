@@ -88,10 +88,10 @@ const ConversationListMemo = ({ onJoin, reload, selectedConversation }) => {
     if (existConversation) {
       onJoin(existConversation);
     } else {
-      const result = await createConversation({
+      const { conversation } = await createConversation({
         participants: [participantId, user._id],
       });
-      onJoin(result, true);
+      onJoin({ conversation }, true);
       setIsReloadConversation((prev) => !prev);
     }
   };
@@ -188,6 +188,7 @@ const ConversationListMemo = ({ onJoin, reload, selectedConversation }) => {
           }}
           onSelected={handleSelected}
           style={{ width: "100%" }}
+          refreshData={!!user._id}
         />
       </Space>
       <SpaceDiv height={10} />
@@ -315,7 +316,7 @@ const ChatPage = () => {
       socket.off("message", onMessage);
       socket.off("newConversation", newConversation);
     };
-  }, [user._id]);
+  }, [selectedConversation._id, user._id]);
 
   useEffect(() => {
     if (selectedConversation._id) {
@@ -364,6 +365,8 @@ const ChatPage = () => {
       }
       setInputMessage("");
       setSelectedConversation(conversation);
+
+      console.log("conversation", conversation);
 
       setParticipant(
         conversation.participants.find((item) => item._id !== user._id) || {}

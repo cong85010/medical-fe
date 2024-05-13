@@ -19,4 +19,10 @@ export const reAuth = async (body) => {
   
     return response;
   };
+
+export const changePassword = async (body) => {
+    const response = await instance.post(`${baseURL}/change-password`, body);
+  
+    return response;
+  };
   

@@ -28,6 +28,7 @@ import OrdersPage from "./pages/sales/Orders";
 import StatisticsPage from "./pages/sales/Statistics";
 import updateLocale from "dayjs/plugin/updateLocale";
 import ChatPage from "./pages/Chat";
+import ChangePassPage from "./pages/ChangePass";
 
 dayjs.extend(updateLocale);
 dayjs.updateLocale("en", {
@@ -101,6 +102,10 @@ function App() {
           <Route
             path="/profile"
             element={<PrivateRoute element={<ProfilePage />} />}
+          />
+          <Route
+            path="/change-pass"
+            element={<PrivateRoute element={<ChangePassPage />} />}
           />
           <Route
             path="/chat"

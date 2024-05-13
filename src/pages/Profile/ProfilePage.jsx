@@ -29,6 +29,7 @@ import { updateUser } from "src/api/user";
 import dayjs from "dayjs";
 import { reLoginAuth } from "src/redux/slices/authSlice";
 import { uploadFiles } from "src/api/upload";
+import { Link } from "react-router-dom";
 
 const { Option } = Select;
 const ProfilePage = () => {
@@ -143,7 +144,13 @@ const ProfilePage = () => {
 
   return (
     <div style={{ padding: "20px" }}>
-      <Title title="Cập nhật tài khoản" />
+      <Title
+        title="Cập nhật tài khoản"
+        styleContainer={{
+          justifyContent: "space-between",
+        }}
+        right={<Link to="/change-pass">Đổi mật khẩu</Link>}
+      />
       <Flex justify="center" align="center">
         <Form
           form={form}
