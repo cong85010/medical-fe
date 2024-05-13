@@ -28,9 +28,6 @@ export default function ChangePassPage() {
         message: "Cập nhật mật khẩu thành công",
       });
     } catch (err) {
-      notification.error({
-        message: "Cập nhật mật khẩu thất bại",
-      });
 
       console.error(err);
     } finally {
