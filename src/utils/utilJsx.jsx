@@ -2,11 +2,29 @@ import { FileOutlined, FilePdfOutlined } from "@ant-design/icons";
 import { Button, Flex, Image, Tag, Tooltip, message } from "antd";
 import { getSourceImage } from ".";
 
-export const getUsagesTable = (usage) => (
-  <Tag color={usage === "before" ? "green" : "blue"}>
-    {usage === "before" ? "Trước ăn" : "Sau ăn"}
-  </Tag>
-);
+export const getUsagesTable = (usage) => {
+  let color = "";
+  let text = "";
+
+  switch (usage) {
+    case "before":
+      color = "green";
+      text = "Trước ăn";
+      break;
+    case "after":
+      color = "blue";
+      text = "Sau ăn";
+      break;
+    case "both":
+      color = "orange";
+      text = "Trước / Sau ăn";
+      break;
+    default:
+      return "";
+  }
+
+  return <Tag color={color}>{text}</Tag>;
+};
 
 export const getTypeFile = (url) => {
   const urlBE = getSourceImage(url);

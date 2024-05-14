@@ -370,6 +370,7 @@ const MedicinePage = () => {
             <Radio.Group>
               <Radio value="before">Trước ăn</Radio>
               <Radio value="after">Sau ăn</Radio>
+              <Radio value="both">Trước / sau ăn</Radio>
             </Radio.Group>
           </Form.Item>
           <Form.Item

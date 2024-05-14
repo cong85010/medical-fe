@@ -24,4 +24,5 @@ export const updateUser = (user) => {
 
 export const getUserById = (id) => {
   return instance.get(`${BASE_URL}/${id}`);
-}
+};
+

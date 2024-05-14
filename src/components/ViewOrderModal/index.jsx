@@ -26,6 +26,7 @@ import {
 } from "src/utils";
 import { CopyPhonenumber } from "../CopyPhone";
 import SpaceDiv from "../SpaceDiv";
+import { getUsagesTable } from "src/utils/utilJsx";
 
 const ViewOrderModal = ({
   visible,
@@ -79,12 +80,10 @@ const ViewOrderModal = ({
     {
       width: 120,
       title: "Cách dùng",
-      dataIndex: "affterEat",
-      key: "affterEat",
+      dataIndex: "usage",
+      key: "usage",
       align: "center",
-      render: (affterEat, record) => {
-        return <Space>{affterEat ? "Sau khi ăn" : "Trước khi ăn"}</Space>;
-      },
+      render: (usage) => getUsagesTable(usage),
     },
     {
       title: "Số lượng",

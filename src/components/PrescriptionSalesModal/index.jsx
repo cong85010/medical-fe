@@ -36,6 +36,7 @@ import { getUsers } from "src/api/user";
 import { DebounceSelect } from "../DeboundSelect";
 import dayjs from "dayjs";
 import AddPatientModal from "../AddPatientModal";
+import { getUsagesTable } from "src/utils/utilJsx";
 
 const PrescriptionSalesModal = ({
   medicalRecordId,
@@ -51,9 +52,8 @@ const PrescriptionSalesModal = ({
   const [loading, setLoading] = useState(false);
   const [medicinesAdded, setMedicinesAdded] = useState([]);
   const [patient, setPatient] = useState(null);
-  const [medicine, setMedicine] = useState(null);
+  const [medicine, setMedicine] = useState({});
   const [quantity, setQuantity] = useState(0);
-  const [afterEat, setAfterEat] = useState(true);
   const [outOfPill, setOutOfPill] = useState(false);
   const [isCreate, setIsCreate] = useState(true);
   const [form] = Form.useForm();
@@ -86,11 +86,8 @@ const PrescriptionSalesModal = ({
           label: `${item.name || "Chưa xác định"} - SL: ${
             item.quantity
           } - ${formatPrice(item?.price)}`,
-          name: item.name,
-          quantity: item.quantity,
-          price: item?.price,
+          ...item,
           value: item._id,
-          _id: item._id,
         };
       });
 
@@ -127,7 +124,6 @@ const PrescriptionSalesModal = ({
     const selected = optionMedicines.find((opt) => opt._id === record._id);
     setMedicine(selected);
     setQuantity(record.quantity);
-    setAfterEat(record.affterEat);
     setOutOfPill(record.outOfPill);
     setIsCreate(false);
   };
@@ -148,12 +144,10 @@ const PrescriptionSalesModal = ({
     {
       width: 120,
       title: "Cách dùng",
-      dataIndex: "affterEat",
-      key: "affterEat",
+      dataIndex: "usage",
+      key: "usage",
       align: "center",
-      render: (affterEat, record) => {
-        return <Space>{affterEat ? "Sau khi ăn" : "Trước khi ăn"}</Space>;
-      },
+      render: (usage) => getUsagesTable(usage),
     },
     {
       title: "Số lượng",
@@ -184,7 +178,7 @@ const PrescriptionSalesModal = ({
     {
       width: 80,
       key: "action",
-      render: (affterEat, record) => {
+      render: (_, record) => {
         return (
           <Space>
             <Tooltip title="Chỉnh sửa">
@@ -234,7 +228,7 @@ const PrescriptionSalesModal = ({
         _id: medicine._id,
         name: medicine.name,
         quantity: quantity,
-        affterEat: afterEat,
+        usage: medicine.usage,
         outOfPill: outOfPill,
         price: medicine.price,
       };
@@ -280,24 +274,19 @@ const PrescriptionSalesModal = ({
         onCreated();
       })
       .catch((info) => {
-        notification.error({
-          message: "Lỗi",
-          description: "Có lỗi xảy ra!",
-        });
         console.log("Validate Failed:", info);
       });
   };
 
   const clearsMedicine = () => {
     setQuantity(0);
-    setAfterEat(true);
     setOutOfPill(false);
-    setMedicine(null);
+    setMedicine({});
     setIsCreate(true);
   };
   const handleCancel = function () {
     form.resetFields();
-    setMedicine(null);
+    setMedicine({});
     setFileList([]);
     setMedicinesAdded([]);
     clearsMedicine();
@@ -418,14 +407,7 @@ const PrescriptionSalesModal = ({
         </Form.Item>
         <Form.Item label="Cách dùng">
           <Flex align="center" justify="space-between">
-            <Checkbox
-              min={0}
-              checked={afterEat}
-              onChange={() => setAfterEat((prev) => !prev)}
-            />
-            <Typography.Text>
-              {afterEat ? "Sau khi ăn" : "Trước khi ăn"}
-            </Typography.Text>
+            <Typography.Text>{getUsagesTable(medicine.usage)}</Typography.Text>
             <Divider type="vertical" />
             <Typography.Text>Đơn giá:</Typography.Text>
             <Typography.Text

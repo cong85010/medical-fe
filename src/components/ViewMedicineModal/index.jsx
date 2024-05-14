@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Modal, Typography, List, Table, Space, Tag } from "antd";
+import { getUsagesTable } from "src/utils/utilJsx";
 const columns = [
   {
     title: "Tên thuốc",
@@ -12,12 +13,10 @@ const columns = [
     key: "quantity",
   },
   {
-    title: "Trước/Sau ăn",
+    title: "Cách dùng",
     dataIndex: "usage",
     key: "usage",
-    render: (usage) => (
-      <Tag color={usage === "before" ? "green" : "volcano"}>{usage}</Tag>
-    ),
+    render: (usage) => getUsagesTable(usage),
   },
   {
     title: "Sáng",
@@ -69,12 +68,7 @@ const ViewMedicineModal = ({ visible, onCancel, medicalRecord }) => {
       footer={null}
       width={700}
     >
-      <Table
-        dataSource={medications}
-        columns={columns}
-        rowKey="medicineName"
-      
-      />
+      <Table dataSource={medications} columns={columns} rowKey="medicineName" />
     </Modal>
   );
 };

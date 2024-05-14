@@ -210,8 +210,9 @@ export const Specialties = [
   },
   {
     id: "other",
-    name: "Chưa xác định",
-    description: "Chuyên khoa không xác định hoặc đang chờ xác định.",
+    name: "Đa khoa",
+    description:
+      "Điều trị các bệnh mãn và cấp tính, hướng dẫn phục hồi sức khỏe",
   },
 ];
 
@@ -317,3 +318,5 @@ export const TYPE_SOCKET = {
   message: "message",
   notification: "notification",
 };
+
+export const PASSWORD_DEFAULT = "123456";

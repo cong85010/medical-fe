@@ -23,10 +23,12 @@ import {
   Tooltip,
   DatePicker,
   Avatar,
+  Popconfirm,
 } from "antd";
 import dayjs from "dayjs";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { resetPassword } from "src/api/auth";
 import {
   changeActiveStatus,
   createUser,
@@ -38,6 +40,7 @@ import SpaceDiv from "src/components/SpaceDiv";
 import Title from "src/components/Title";
 import {
   Gender,
+  PASSWORD_DEFAULT,
   Specialties,
   TYPE_EMPLOYEE,
   TYPE_EMPLOYEE_STR,
@@ -194,7 +197,8 @@ export default function UsersPage() {
     {
       title: "Hành động",
       fixed: "right",
-      width: 130,
+      align: "center",
+      width: 150,
       ellipsis: true,
       key: "action",
       render: (_, record) => (
@@ -204,15 +208,37 @@ export default function UsersPage() {
               record?.activeStatus ? "Bạn muốn khóa ?" : "Bạn muốn mở khóa?"
             }
           >
-            <Button type="text" onClick={() => handleStatus(record)}>
-              {record?.activeStatus ? <UnlockOutlined /> : <LockOutlined />}
-            </Button>
+            <Button
+              type="text"
+              onClick={() => handleStatus(record)}
+              icon={
+                record?.activeStatus ? <UnlockOutlined /> : <LockOutlined />
+              }
+            ></Button>
           </Tooltip>
-          <Tooltip title="Chỉnh sửa thông tin">
-            <Button type="text" onClick={() => handleEdit(record)}>
-              <EditOutlined />
-            </Button>
-          </Tooltip>
+          {record?.userType === TYPE_EMPLOYEE.user ? null : (
+            <Tooltip title="Chỉnh sửa thông tin">
+              <Button
+                type="text"
+                onClick={() => handleEdit(record)}
+                icon={<EditOutlined />}
+              ></Button>
+            </Tooltip>
+          )}
+
+          <Popconfirm
+            title="Khôi phục mật khẩu"
+            description={
+              "Mật khẩu sẽ được khôi phục về mặc định là " + PASSWORD_DEFAULT
+            }
+            onConfirm={() => handleResetPassword(record._id)}
+            okText="Xác nhận"
+            cancelText="Hủy"
+          >
+            <Tooltip title="Khôi phục mật khẩu mặc định" placement="topRight">
+              <Button type="text" icon={<ReloadOutlined />}></Button>
+            </Tooltip>
+          </Popconfirm>
         </Space>
       ),
     },
@@ -277,6 +303,16 @@ export default function UsersPage() {
       .catch((info) => {
         console.log("Validate Failed:", info);
       });
+  };
+
+  const handleResetPassword = async (id) => {
+    try {
+      const result = await resetPassword({ userId: id });
+      notification.success({ message: "Khôi phục mật khẩu thành công" });
+    } catch (error) {
+      console.log(error);
+      notification.error({ message: "Có lỗi xảy ra" });
+    }
   };
 
   useEffect(() => {
@@ -365,7 +401,7 @@ export default function UsersPage() {
       />
       <Modal
         open={isVisible}
-        title="Thêm nhân viên"
+        title={selectedUser ? "Cập nhật nhân viên" : "Thêm nhân viên"}
         onOk={handleOk}
         okText={selectedUser ? "Cập nhật" : "Thêm"}
         cancelText="Hủy"

@@ -38,6 +38,7 @@ import {
   updateMedicalRecord,
 } from "src/api/medicalRecord";
 import { uploadFile, uploadFiles } from "src/api/upload";
+import { getUsagesTable } from "src/utils/utilJsx";
 
 const MedicalRecordModal = ({
   appointmentId,
@@ -52,7 +53,6 @@ const MedicalRecordModal = ({
   const [medicinesAdded, setMedicinesAdded] = useState([]);
   const [medicine, setMedicine] = useState(null);
   const [quantity, setQuantity] = useState(0);
-  const [afterEat, setAfterEat] = useState(true);
   const [outOfPill, setOutOfPill] = useState(false);
   const [isCreate, setIsCreate] = useState(true);
   const [form] = Form.useForm();
@@ -68,13 +68,14 @@ const MedicalRecordModal = ({
       const newData = medicines?.map((item) => {
         return {
           label: `${item.name || "Chưa xác định"} - SL: ${item.quantity}`,
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price,
+          ...item,
           value: item._id,
-          _id: item._id,
         };
       });
+
+      console.log("====================================");
+      console.log(newData);
+      console.log("====================================");
 
       setOptionMedicines(newData);
     } catch (error) {
@@ -107,7 +108,6 @@ const MedicalRecordModal = ({
     const selected = optionMedicines.find((opt) => opt._id === record._id);
     setMedicine(selected);
     setQuantity(record.quantity);
-    setAfterEat(record.affterEat);
     setOutOfPill(record.outOfPill);
     setIsCreate(false);
   };
@@ -128,11 +128,11 @@ const MedicalRecordModal = ({
     {
       width: 120,
       title: "Cách dùng",
-      dataIndex: "affterEat",
-      key: "affterEat",
+      dataIndex: "usage",
+      key: "usage",
       align: "center",
-      render: (affterEat, record) => {
-        return <Space>{affterEat ? "Sau khi ăn" : "Trước khi ăn"}</Space>;
+      render: (usage, record) => {
+        return getUsagesTable(usage);
       },
     },
     {
@@ -161,7 +161,7 @@ const MedicalRecordModal = ({
     {
       width: 80,
       key: "action",
-      render: (affterEat, record) => {
+      render: (_, record) => {
         return (
           <Space>
             <Tooltip title="Chỉnh sửa">
@@ -206,7 +206,7 @@ const MedicalRecordModal = ({
         _id: medicine._id,
         name: medicine.name,
         quantity: quantity,
-        affterEat: afterEat,
+        usage: medicine.usage,
         outOfPill: outOfPill,
         price: medicine.price,
       };
@@ -218,62 +218,53 @@ const MedicalRecordModal = ({
   };
 
   const handleOK = () => {
-    form
-      .validateFields()
-      .then(async (values) => {
-        if (medicalRecord) {
-          const filesNeedAdd = fileList.filter((file) => !file?.isAdded);
-          let files = medicalRecord.files;
-          if (filesNeedAdd.length > 0) {
-            const { fileURLs } = await uploadFiles(filesNeedAdd);
-            files = files.concat(fileURLs);
-          }
-          //update
-          const { medicalRecord: newRecord } = await updateMedicalRecord({
-            ...medicalRecord,
-            result: values.result,
-            files: files,
-            medicines: medicinesAdded,
-            note: values.note,
-            patientId: patientId,
-            doctorId: doctorId,
-            outOfPill,
-          });
+    form.validateFields().then(async (values) => {
+      if (medicalRecord) {
+        const filesNeedAdd = fileList.filter((file) => !file?.isAdded);
+        let files = medicalRecord.files;
+        if (filesNeedAdd.length > 0) {
+          const { fileURLs } = await uploadFiles(filesNeedAdd);
+          files = files.concat(fileURLs);
+        }
+        //update
+        const { medicalRecord: newRecord } = await updateMedicalRecord({
+          ...medicalRecord,
+          result: values.result,
+          files: files,
+          medicines: medicinesAdded,
+          note: values.note,
+          patientId: patientId,
+          doctorId: doctorId,
+          outOfPill,
+        });
 
-          onCreated(newRecord);
-        } else {
-          let files = [];
-          if (fileList.length > 0) {
-            const { fileURLs } = await uploadFiles(fileList);
-            files = fileURLs;
-          }
-
-          const { medicalRecord } = await createMedicalRecord({
-            result: values.result,
-            files: files,
-            medicines: medicinesAdded,
-            note: values.note,
-            patientId: patientId,
-            doctorId: doctorId,
-            appointmentId: appointmentId,
-            outOfPill,
-          });
-
-          onCreated(medicalRecord);
+        onCreatedFinished(newRecord);
+      } else {
+        let files = [];
+        if (fileList.length > 0) {
+          const { fileURLs } = await uploadFiles(fileList);
+          files = fileURLs;
         }
 
-        notification.success({
-          message: "Thành công",
-          description: "Lưu kết quả khám bệnh thành công",
+        const { medicalRecord } = await createMedicalRecord({
+          result: values.result,
+          files: files,
+          medicines: medicinesAdded,
+          note: values.note,
+          patientId: patientId,
+          doctorId: doctorId,
+          appointmentId: appointmentId,
+          outOfPill,
         });
-      })
-      .catch((info) => {
-        notification.error({
-          message: "Lỗi",
-          description: "Có lỗi xảy ra!",
-        });
-        console.log("Validate Failed:", info);
+
+        onCreatedFinished(medicalRecord);
+      }
+
+      notification.success({
+        message: "Thành công",
+        description: "Lưu kết quả khám bệnh thành công",
       });
+    });
   };
 
   const props = {
@@ -310,9 +301,17 @@ const MedicalRecordModal = ({
     fileList,
   };
 
+  const onCreatedFinished = (result) => {
+    form.resetFields();
+    setMedicine(null);
+    setFileList([]);
+    setMedicinesAdded([]);
+    clearsMedicine();
+    onCreated(result);
+  };
+
   const clearsMedicine = () => {
     setQuantity(0);
-    setAfterEat(true);
     setOutOfPill(false);
     setMedicine(null);
     setIsCreate(true);
@@ -395,7 +394,9 @@ const MedicalRecordModal = ({
               style={{ width: 270 }}
               placeholder="Chọn thuốc"
               options={optionMedicines}
-              onChange={(value, item) => setMedicine(item)}
+              onChange={(value, item) => {
+                setMedicine(item);
+              }}
               value={medicine?._id || ""}
               disabled={!isCreate}
             />
@@ -416,14 +417,7 @@ const MedicalRecordModal = ({
         </Form.Item>
         <Form.Item label="Cách dùng">
           <Flex align="center" justify="space-between">
-            <Checkbox
-              min={0}
-              checked={afterEat}
-              onChange={() => setAfterEat((prev) => !prev)}
-            />
-            <Typography.Text>
-              {afterEat ? "Sau khi ăn" : "Trước khi ăn"}
-            </Typography.Text>
+            <Typography.Text>{getUsagesTable(medicine?.usage)}</Typography.Text>
             <Divider type="vertical" />
             <Typography.Text>Hết thuốc</Typography.Text>
             <Checkbox
